@@ -31,7 +31,11 @@ public class ResilienceService {
 
   private static final long inactiveThreshold =
       CommonParameter.getInstance().getInactiveThreshold() * 1000L;
-  public static final long blockNotChangeThreshold = 60 * 1000L;
+  // Leave room for local GC pauses and disk stalls; a shorter threshold can evict healthy peers.
+  public static final long blockNotChangeThreshold = 30 * 1000L;
+  // Free slots early, but keep long bans at the previous threshold and cadence.
+  private static final long blockNotChangeBanThreshold = 60 * 1000L;
+  private static final long banRoundInterval = 30 * 1000L;
 
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
@@ -40,6 +44,7 @@ public class ResilienceService {
   private static final String esName = "resilience-service";
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(esName);
+  private long lastBanRoundTime;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -68,13 +73,14 @@ public class ResilienceService {
       }
     }, initialDelay, 10, TimeUnit.SECONDS);
 
+    // Limit polling delay after the no-progress threshold is reached.
     executor.scheduleWithFixedDelay(() -> {
       try {
         disconnectIsolated2();
       } catch (Exception e) {
         logger.error("DisconnectIsolated node failed", e);
       }
-    }, initialDelay, 30, TimeUnit.SECONDS);
+    }, initialDelay, 10, TimeUnit.SECONDS);
   }
 
   private void disconnectRandom() {
@@ -158,6 +164,12 @@ public class ResilienceService {
     }
     logger.warn("Node is isolated, try to disconnect from peers");
 
+    long now = System.currentTimeMillis();
+    long stalled = now - chainBaseManager.getLatestSaveBlockTime();
+    boolean ban = stalled >= blockNotChangeBanThreshold
+        && now - lastBanRoundTime >= banRoundInterval;
+    ReasonCode reason = ban ? ReasonCode.BAD_PROTOCOL : ReasonCode.SYNC_FAIL;
+
     //disconnect from the node whose lastActiveTime is smallest
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.getChannel().isOutbound())
@@ -169,8 +181,12 @@ public class ResilienceService {
           .collect(Collectors.toList());
 
       Optional<PeerConnection> one = getEarliestPeer(peers);
-      one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL,
-          DisconnectCause.ISOLATE2_ACTIVE));
+      one.ifPresent(peer -> {
+        disconnectFromPeer(peer, reason, DisconnectCause.ISOLATE2_ACTIVE);
+        if (ban) {
+          lastBanRoundTime = System.currentTimeMillis();
+        }
+      });
     }
 
     //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection,
@@ -195,8 +211,12 @@ public class ResilienceService {
       }
       logger.info("All peer Size:{}, plan size:{}, candidate size:{}, real size:{}", peerSize,
           disconnectSize, candidateSize, peers.size());
-      peers.forEach(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL,
-          DisconnectCause.ISOLATE2_PASSIVE));
+      peers.forEach(peer -> {
+        disconnectFromPeer(peer, reason, DisconnectCause.ISOLATE2_PASSIVE);
+        if (ban) {
+          lastBanRoundTime = System.currentTimeMillis();
+        }
+      });
     }
   }
 

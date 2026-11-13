@@ -6,6 +6,7 @@ import static org.mockito.Mockito.spy;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,12 +20,15 @@ import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol.ReasonCode;
 
 public class ResilienceServiceTest extends BaseTest {
 
@@ -245,5 +249,176 @@ public class ResilienceServiceTest extends BaseTest {
         activeNodeSize + passiveSize);
     Assert.assertEquals((int) (maxConnection * ResilienceService.retentionPercent),
         PeerManager.getPeers().size());
+  }
+
+  @Test
+  public void testDisconnectIsolated2UsesCooldownBeforeBanThreshold() {
+    List<PeerConnection> peers = isolatedPeers(3, 23);
+    PeerConnection outbound = peers.get(0);
+    PeerConnection passive = peers.get(3);
+    ResilienceService isolatedService = isolatedService(peers, 35_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(outbound).disconnect(ReasonCode.SYNC_FAIL);
+      Mockito.verify(passive).disconnect(ReasonCode.SYNC_FAIL);
+      Assert.assertEquals(24, peers.size());
+      Assert.assertEquals(0L,
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime"));
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  @Test
+  public void testDisconnectIsolated2LimitsBanRounds() {
+    List<PeerConnection> peers = isolatedPeers(3, 23);
+    List<PeerConnection> original = new ArrayList<>(peers);
+    ResilienceService isolatedService = isolatedService(peers, 65_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(original.get(0)).disconnect(ReasonCode.BAD_PROTOCOL);
+      Mockito.verify(original.get(3)).disconnect(ReasonCode.BAD_PROTOCOL);
+      long lastBanTime = (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime");
+      Assert.assertTrue(lastBanTime > 0);
+
+      // Replace the two disconnected peers so the next round can free slots again.
+      peers.add(isolatedPeer(peers, true, 100));
+      peers.add(isolatedPeer(peers, false, 100));
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(original.get(1)).disconnect(ReasonCode.SYNC_FAIL);
+      Mockito.verify(original.get(4)).disconnect(ReasonCode.SYNC_FAIL);
+      Assert.assertEquals(lastBanTime,
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime"));
+
+      peers.add(isolatedPeer(peers, true, 101));
+      peers.add(isolatedPeer(peers, false, 101));
+      ReflectUtils.setFieldValue(isolatedService, "lastBanRoundTime",
+          System.currentTimeMillis() - 31_000L);
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(original.get(2)).disconnect(ReasonCode.BAD_PROTOCOL);
+      Mockito.verify(original.get(5)).disconnect(ReasonCode.BAD_PROTOCOL);
+      Assert.assertTrue(
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime") >= lastBanTime);
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  @Test
+  public void testDisconnectIsolated2RecordsPassiveBanRound() {
+    List<PeerConnection> peers = isolatedPeers(0, 26);
+    PeerConnection first = peers.get(0);
+    PeerConnection second = peers.get(1);
+    ResilienceService isolatedService = isolatedService(peers, 65_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(first).disconnect(ReasonCode.BAD_PROTOCOL);
+      Mockito.verify(second).disconnect(ReasonCode.BAD_PROTOCOL);
+      Assert.assertEquals(24, peers.size());
+      Assert.assertTrue(
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime") > 0);
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  @Test
+  public void testDisconnectIsolated2WaitsForStallThreshold() {
+    List<PeerConnection> peers = isolatedPeers(3, 23);
+    ResilienceService isolatedService = isolatedService(peers, 25_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      peers.forEach(peer -> Mockito.verify(peer, Mockito.never()).disconnect(any()));
+      Assert.assertEquals(0L,
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime"));
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  @Test
+  public void testDisconnectIsolated2StopsAfterBlockProgress() {
+    List<PeerConnection> peers = isolatedPeers(3, 23);
+    ResilienceService isolatedService = isolatedService(peers, 65_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+      long lastBanTime = (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime");
+      peers.add(isolatedPeer(peers, true, 100));
+      peers.add(isolatedPeer(peers, false, 100));
+      ChainBaseManager chain = (ChainBaseManager)
+          ReflectUtils.getFieldObject(isolatedService, "chainBaseManager");
+      Mockito.when(chain.getLatestSaveBlockTime()).thenReturn(System.currentTimeMillis());
+
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      peers.forEach(peer -> Mockito.verify(peer, Mockito.never()).disconnect(any()));
+      Assert.assertEquals(26, peers.size());
+      Assert.assertEquals(lastBanTime,
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime"));
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  @Test
+  public void testDisconnectIsolated2EmptyRoundDoesNotDelayBan() {
+    List<PeerConnection> peers = isolatedPeers(2, 0);
+    PeerConnection first = peers.get(0);
+    ResilienceService isolatedService = isolatedService(peers, 65_000L);
+    try {
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      peers.forEach(peer -> Mockito.verify(peer, Mockito.never()).disconnect(any()));
+      Assert.assertEquals(0L,
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime"));
+
+      peers.add(isolatedPeer(peers, true, 100));
+      ReflectUtils.invokeMethod(isolatedService, "disconnectIsolated2");
+
+      Mockito.verify(first).disconnect(ReasonCode.BAD_PROTOCOL);
+      Assert.assertTrue(
+          (long) ReflectUtils.getFieldObject(isolatedService, "lastBanRoundTime") > 0);
+    } finally {
+      isolatedService.close();
+    }
+  }
+
+  private ResilienceService isolatedService(List<PeerConnection> peers, long stalledMillis) {
+    ResilienceService isolatedService = new ResilienceService();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ChainBaseManager chain = Mockito.mock(ChainBaseManager.class);
+    Mockito.when(delegate.getActivePeer()).thenReturn(peers);
+    Mockito.when(chain.getLatestSaveBlockTime())
+        .thenReturn(System.currentTimeMillis() - stalledMillis);
+    ReflectUtils.setFieldValue(isolatedService, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(isolatedService, "chainBaseManager", chain);
+    return isolatedService;
+  }
+
+  private List<PeerConnection> isolatedPeers(int outboundCount, int passiveCount) {
+    List<PeerConnection> peers = new ArrayList<>();
+    for (int i = 0; i < outboundCount + passiveCount; i++) {
+      peers.add(isolatedPeer(peers, i < outboundCount, i));
+    }
+    return peers;
+  }
+
+  private PeerConnection isolatedPeer(List<PeerConnection> peers, boolean outbound, long order) {
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(peer.getChannel()).thenReturn(channel);
+    Mockito.when(channel.isOutbound()).thenReturn(outbound);
+    Mockito.when(peer.getLastInteractiveTime()).thenReturn(order);
+    Mockito.doAnswer(invocation -> {
+      peers.remove(peer);
+      return null;
+    }).when(peer).disconnect(any());
+    return peer;
   }
 }
