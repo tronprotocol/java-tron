@@ -1,6 +1,7 @@
 package org.tron.core.db2.core;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -287,15 +289,15 @@ public class SnapshotRootCacheRaceTest {
   }
 
   /**
-   * A stale reader that passed the lock-free check and then waits on cacheLock must recheck the
-   * generation after acquiring it: a write may advance it while the reader is blocked.
+   * A stale reader that passed the lock-free check and then waits for the read lock must recheck
+   * the generation after acquiring it: a write may advance it while the reader is waiting.
    */
   @Test
   public void staleReadWaitingOnLockIsSkipped() throws Exception {
     FakeFlushDB db = new FakeFlushDB(CACHED_DB);
     db.seed(K, OLD);
     SnapshotRoot root = new SnapshotRoot(db);
-    Object lock = cacheLock(root);
+    ReentrantReadWriteLock lock = cacheLock(root);
 
     CountDownLatch entered = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
@@ -308,10 +310,13 @@ public class SnapshotRootCacheRaceTest {
     });
     try {
       assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
-      synchronized (lock) {
-        release.countDown();                 // reader passes the lock-free check, then blocks
-        assertTrue("reader did not block on cacheLock", awaitBlocked(readerThread.get()));
+      lock.writeLock().lock();
+      try {
+        release.countDown();                 // reader passes the lock-free check, then waits
+        assertTrue("reader did not queue on cacheLock", awaitQueued(lock, readerThread.get()));
         root.put(K, NEW);                    // reentrant: advances the generation, caches NEW
+      } finally {
+        lock.writeLock().unlock();
       }
     } finally {
       release.countDown();
@@ -322,7 +327,29 @@ public class SnapshotRootCacheRaceTest {
     WrappedByteArray cached = peek(root, K);
     assertNotNull(cached);
     assertArrayEquals(NEW, cached.getBytes());
+    assertUnlocked(lock);
     assertArrayEquals(NEW, root.get(K));
+  }
+
+  /** Refills only share the read lock, so one in flight must not hold up or drop another. */
+  @Test
+  public void concurrentRefillsDoNotBlockEachOther() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+    ReentrantReadWriteLock lock = cacheLock(root);
+
+    lock.readLock().lock();                  // stands in for another refill in flight
+    try {
+      Future<byte[]> reader = exec.submit(() -> root.get(K));
+      assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));
+      WrappedByteArray cached = peek(root, K);
+      assertNotNull("a concurrent refill must still cache its value", cached);
+      assertArrayEquals(OLD, cached.getBytes());
+    } finally {
+      lock.readLock().unlock();
+    }
+    assertUnlocked(lock);
   }
 
   /**
@@ -430,6 +457,7 @@ public class SnapshotRootCacheRaceTest {
     FakeFlushDB db = new FakeFlushDB(CACHED_DB);
     db.seed(K, OLD);
     SnapshotRoot root = new SnapshotRoot(db);
+    ReentrantReadWriteLock lock = cacheLock(root);
 
     CountDownLatch refilling = new CountDownLatch(1);
     CountDownLatch resume = new CountDownLatch(1);
@@ -444,7 +472,8 @@ public class SnapshotRootCacheRaceTest {
         writerThread.set(Thread.currentThread());
         write.accept(root);
       });
-      assertTrue("writer neither blocked nor finished", awaitBlockedOrDone(writerThread, writer));
+      assertTrue("writer neither queued nor finished",
+          awaitQueuedOrDone(lock, writerThread, writer));
     } finally {
       resume.countDown();
     }
@@ -454,6 +483,7 @@ public class SnapshotRootCacheRaceTest {
     WrappedByteArray cached = peek(root, K);
     assertNotNull(cached);
     assertArrayEquals(NEW, cached.getBytes());
+    assertUnlocked(lock);
     assertArrayEquals(NEW, root.get(K));
   }
 
@@ -562,6 +592,7 @@ public class SnapshotRootCacheRaceTest {
     WrappedByteArray cached = peek(root, K);
     assertNotNull("plain miss must refill", cached);
     assertArrayEquals(OLD, cached.getBytes());
+    assertUnlocked(cacheLock(root));
   }
 
   // ---- helpers ----
@@ -584,15 +615,21 @@ public class SnapshotRootCacheRaceTest {
     return (Cache<WrappedByteArray, WrappedByteArray>) guavaField().get(tronCache(root));
   }
 
-  private static Object cacheLock(SnapshotRoot root) throws Exception {
+  private static ReentrantReadWriteLock cacheLock(SnapshotRoot root) throws Exception {
     Field f = SnapshotRoot.class.getDeclaredField("cacheLock");
     f.setAccessible(true);
-    return f.get(root);
+    return (ReentrantReadWriteLock) f.get(root);
   }
 
-  private static boolean awaitBlocked(Thread thread) throws InterruptedException {
+  private static void assertUnlocked(ReentrantReadWriteLock lock) {
+    assertFalse("cacheLock write lock still held", lock.isWriteLocked());
+    assertEquals("cacheLock read lock still held", 0, lock.getReadLockCount());
+  }
+
+  private static boolean awaitQueued(ReentrantReadWriteLock lock, Thread thread)
+      throws InterruptedException {
     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
-    while (thread.getState() != Thread.State.BLOCKED) {
+    while (!lock.hasQueuedThread(thread)) {
       if (System.nanoTime() > deadline) {
         return false;
       }
@@ -601,12 +638,12 @@ public class SnapshotRootCacheRaceTest {
     return true;
   }
 
-  private static boolean awaitBlockedOrDone(AtomicReference<Thread> thread, Future<?> task)
-      throws InterruptedException {
+  private static boolean awaitQueuedOrDone(ReentrantReadWriteLock lock,
+      AtomicReference<Thread> thread, Future<?> task) throws InterruptedException {
     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
     while (!task.isDone()) {
       Thread t = thread.get();
-      if (t != null && t.getState() == Thread.State.BLOCKED) {
+      if (t != null && lock.hasQueuedThread(t)) {
         return true;
       }
       if (System.nanoTime() > deadline) {
@@ -689,7 +726,9 @@ public class SnapshotRootCacheRaceTest {
   private static void park(CountDownLatch reached, CountDownLatch resume) {
     reached.countDown();
     try {
-      resume.await(30, TimeUnit.SECONDS);
+      if (!resume.await(30, TimeUnit.SECONDS)) {
+        throw new AssertionError("paused thread was never resumed");
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
