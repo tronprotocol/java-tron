@@ -33,6 +33,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
@@ -260,6 +261,15 @@ public class PeerConnection {
     return advInvRequest.keySet().stream()
         .noneMatch(item -> item.getType() == Protocol.Inventory.InventoryType.BLOCK)
         && isSyncIdle() && syncBlockInProcess.isEmpty();
+  }
+
+  public boolean canFetchBlock(Item item, long now) {
+    if (isDisconnect() || isNeedSyncFromPeer() || isNeedSyncFromUs()) {
+      return false;
+    }
+    Long received = advInvReceive.getIfPresent(item);
+    return received != null && received >= now - NetConstants.ADV_TIME_OUT
+        && isIdleForAdvBlockFetch();
   }
 
   public boolean isSyncIdle() {

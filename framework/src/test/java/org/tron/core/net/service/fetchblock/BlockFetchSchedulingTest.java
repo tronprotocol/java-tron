@@ -131,35 +131,35 @@ public class BlockFetchSchedulingTest {
     long now = System.currentTimeMillis();
     first.getAdvInvRequest().put(transaction(), now);
     Assert.assertFalse(first.isIdle());
-    Assert.assertTrue(fetch.canFetchBlock(first, item, now));
+    Assert.assertTrue(first.canFetchBlock(item, now));
     first.getAdvInvRequest().put(blockItem(102), now);
     Assert.assertFalse(first.isIdleForAdvBlockFetch());
     first.getAdvInvRequest().remove(blockItem(102));
     first.getSyncBlockRequested().put(new BlockId(), now);
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.getSyncBlockRequested().clear();
     first.setSyncChainRequested(new Pair<>(new ArrayDeque<>(), now));
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.setSyncChainRequested(null);
     first.getSyncBlockInProcess().add(new BlockId());
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.getSyncBlockInProcess().clear();
     first.setNeedSyncFromPeer(true);
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.setNeedSyncFromPeer(false);
     first.setNeedSyncFromUs(true);
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.setNeedSyncFromUs(false);
     when(first.getChannel().isDisconnect()).thenReturn(true);
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
   }
 
   @Test
   public void blockFetchRequiresRecentAnnouncement() {
     long now = System.currentTimeMillis();
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
     first.getAdvInvReceive().put(item, now - NetConstants.ADV_TIME_OUT - 1);
-    Assert.assertFalse(fetch.canFetchBlock(first, item, now));
+    Assert.assertFalse(first.canFetchBlock(item, now));
   }
 
   @Test
@@ -210,7 +210,7 @@ public class BlockFetchSchedulingTest {
     when(chain.getHeadBlockNum()).thenReturn(101L);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(item.getHash()));
     announce(first, higher);
-    Assert.assertTrue(fetch.canFetchBlock(first, higher, System.currentTimeMillis()));
+    Assert.assertTrue(first.canFetchBlock(higher, System.currentTimeMillis()));
     Assert.assertFalse(adv.addInv(higher));
     consume();
     tick(state());

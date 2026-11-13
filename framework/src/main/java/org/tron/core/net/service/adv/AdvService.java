@@ -351,7 +351,7 @@ public class AdvService {
           return;
         }
         peers.stream()
-            .filter(peer -> fetchBlockService.canFetchBlock(peer, item, now))
+            .filter(peer -> peer.canFetchBlock(item, now))
             .min(Comparator.comparing((PeerConnection peer) -> !peer.isIdle())
                 .thenComparingInt(invSender::getSize))
             .ifPresent(peer -> {

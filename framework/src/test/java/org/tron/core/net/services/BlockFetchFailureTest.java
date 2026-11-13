@@ -2,10 +2,8 @@ package org.tron.core.net.services;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -278,7 +276,6 @@ public class BlockFetchFailureTest {
   public void advertisedScheduleFailureDoesNotDisconnectRelayingPeers() throws Exception {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     FetchBlockService fetch = mock(FetchBlockService.class);
-    doCallRealMethod().when(fetch).canFetchBlock(any(), any(), anyLong());
     AdvService adv = new AdvService();
     ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(adv, "fetchBlockService", fetch);
@@ -322,7 +319,6 @@ public class BlockFetchFailureTest {
   private void assertAdvertisedBlockDoesNotRetry(TypeEnum type) throws Exception {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     FetchBlockService fetch = mock(FetchBlockService.class);
-    doCallRealMethod().when(fetch).canFetchBlock(any(), any(), anyLong());
     AdvService adv = new AdvService();
     ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(adv, "fetchBlockService", fetch);

@@ -18,7 +18,6 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.peer.Item;
@@ -98,15 +97,6 @@ public class FetchBlockService {
     }
   }
 
-  public boolean canFetchBlock(PeerConnection peer, Item item, long now) {
-    if (peer.isDisconnect() || peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {
-      return false;
-    }
-    Long received = peer.getAdvInvReceive().getIfPresent(item);
-    return received != null && received >= now - NetConstants.ADV_TIME_OUT
-        && peer.isIdleForAdvBlockFetch();
-  }
-
   private synchronized void fetchBlockProcess(FetchBlockInfo fetchBlock) {
     if (null == fetchBlock || fetchBlockInfo != fetchBlock) {
       return;
@@ -115,7 +105,7 @@ public class FetchBlockService {
     long now = System.currentTimeMillis();
     Optional<PeerConnection> optionalPeerConnection = tronNetDelegate.getActivePeer().stream()
         .filter(filterPeer -> !filterPeer.equals(fetchBlock.getPeer()))
-        .filter(filterPeer -> canFetchBlock(filterPeer, item, now))
+        .filter(filterPeer -> filterPeer.canFetchBlock(item, now))
         // Seeded estimates are clamped to the fetch timeout; the unseeded channel-latency
         // fallback is not, but min() ordering and the saturation gate keep it safe.
         .min(Comparator.comparingDouble(this::getPeerLatency));
