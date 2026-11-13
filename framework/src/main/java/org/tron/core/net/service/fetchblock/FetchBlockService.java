@@ -99,12 +99,12 @@ public class FetchBlockService {
   }
 
   public boolean canFetchBlock(PeerConnection peer, Item item, long now) {
-    if (peer.isDisconnect() || peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()
-        || !peer.isIdleForAdvBlockFetch()) {
+    if (peer.isDisconnect() || peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {
       return false;
     }
     Long received = peer.getAdvInvReceive().getIfPresent(item);
-    return received != null && received >= now - NetConstants.ADV_TIME_OUT;
+    return received != null && received >= now - NetConstants.ADV_TIME_OUT
+        && peer.isIdleForAdvBlockFetch();
   }
 
   private synchronized void fetchBlockProcess(FetchBlockInfo fetchBlock) {

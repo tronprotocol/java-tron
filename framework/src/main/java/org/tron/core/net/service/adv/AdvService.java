@@ -345,7 +345,6 @@ public class AdvService {
       blocks.sort(Comparator.comparingLong(item -> new BlockId(item.getHash()).getNum()));
       blocks.forEach(item -> {
         if (blockCache.getIfPresent(item) != null
-            || tronNetDelegate.containBlock(new BlockId(item.getHash()))
             || peers.stream().anyMatch(peer -> !peer.isDisconnect()
                 && peer.getAdvInvRequest().containsKey(item))) {
           invToFetch.remove(item);
@@ -356,6 +355,10 @@ public class AdvService {
             .min(Comparator.comparing((PeerConnection peer) -> !peer.isIdle())
                 .thenComparingInt(invSender::getSize))
             .ifPresent(peer -> {
+              if (tronNetDelegate.containBlock(new BlockId(item.getHash()))) {
+                invToFetch.remove(item);
+                return;
+              }
               if (!peer.checkAndPutAdvInvRequest(item, now)) {
                 return;
               }
