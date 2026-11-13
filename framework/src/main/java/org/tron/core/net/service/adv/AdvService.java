@@ -8,12 +8,15 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -253,22 +256,59 @@ public class AdvService {
   */
 
   public void onDisconnect(PeerConnection peer) {
-    // Queue retries for the fetch executor; disconnect callbacks may hold lifecycle locks.
-    if (!peer.getAdvInvRequest().isEmpty()) {
-      peer.getAdvInvRequest().keySet().forEach(item -> {
-        if (tronNetDelegate.getActivePeer().stream()
-            .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)) {
-          invToFetch.put(item, System.currentTimeMillis());
-        } else {
-          invToFetchCache.invalidate(item);
+    List<Item> blocks = new ArrayList<>();
+    peer.getAdvInvRequest().keySet().forEach(item -> {
+      if (item.getType() == InventoryType.BLOCK) {
+        // PeerConnection clears its requests after this callback.
+        blocks.add(item);
+      } else if (tronNetDelegate.getActivePeer().stream()
+          .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)) {
+        invToFetch.put(item, System.currentTimeMillis());
+      } else {
+        invToFetchCache.invalidate(item);
+      }
+    });
+    // Disconnect callbacks may hold lifecycle locks; recover only on the fetch executor.
+    try {
+      fetchExecutor.execute(() -> {
+        try {
+          fetchBlockService.onDisconnect(peer);
+          blocks.forEach(this::recoverFetchOnDisconnect);
+        } catch (Exception e) {
+          logger.error("Recover disconnected peer fetches failed", e);
         }
       });
+    } catch (RejectedExecutionException e) {
+      // Transport disconnect callbacks can outlive the advertisement service during shutdown.
+      logger.debug("Skip fetch recovery after executor shutdown", e);
+    }
+  }
+
+  private synchronized void recoverFetchOnDisconnect(Item item) {
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer();
+    if (blockCache.getIfPresent(item) != null
+        || tronNetDelegate.containBlock(new BlockId(item.getHash()))) {
+      return;
+    }
+    Optional<PeerConnection> pending = peers.stream()
+        .filter(p -> !p.isDisconnect() && p.getAdvInvRequest().containsKey(item)).findFirst();
+    if (pending.isPresent()) {
+      // Reuse the original request and deadline without sending it again.
+      fetchBlockService.fetchBlock(Collections.singletonList(item.getHash()), pending.get());
+      return;
+    }
+    if (peers.stream().anyMatch(p -> !p.isDisconnect()
+        && p.getAdvInvReceive().getIfPresent(item) != null)) {
+      invToFetch.put(item, System.currentTimeMillis());
+    } else {
+      invToFetch.remove(item);
+      invToFetchCache.invalidate(item);
     }
   }
 
   private void consumerInvToFetch() {
-    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.isIdle())
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer();
+    Collection<PeerConnection> trxPeers = peers.stream().filter(PeerConnection::isIdle)
         .collect(Collectors.toList());
     InvSender invSender = new InvSender();
     synchronized (this) {
@@ -276,6 +316,7 @@ public class AdvService {
         return;
       }
       long now = System.currentTimeMillis();
+      List<Item> blocks = new ArrayList<>();
       invToFetch.forEach((item, time) -> {
         if (time < now - TIMEOUT) {
           logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
@@ -284,7 +325,11 @@ public class AdvService {
           invToFetchCache.invalidate(item);
           return;
         }
-        peers.stream().filter(peer -> {
+        if (item.getType() == InventoryType.BLOCK) {
+          blocks.add(item);
+          return;
+        }
+        trxPeers.stream().filter(peer -> {
           Long t = peer.getAdvInvReceive().getIfPresent(item);
           return t != null && now - t < TIMEOUT && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER;
         }).sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
@@ -292,6 +337,36 @@ public class AdvService {
               if (peer.checkAndPutAdvInvRequest(item, now)) {
                 invSender.add(item, peer);
               }
+              invToFetch.remove(item);
+            });
+      });
+
+      // Reserve sources for earlier blocks before a later block makes a source busy.
+      blocks.sort(Comparator.comparingLong(item -> new BlockId(item.getHash()).getNum()));
+      blocks.forEach(item -> {
+        if (blockCache.getIfPresent(item) != null
+            || peers.stream().anyMatch(peer -> !peer.isDisconnect()
+                && peer.getAdvInvRequest().containsKey(item))) {
+          invToFetch.remove(item);
+          return;
+        }
+        peers.stream()
+            .filter(peer -> peer.canFetchBlock(item, now))
+            .min(Comparator.comparing((PeerConnection peer) -> !peer.isIdle())
+                .thenComparingInt(invSender::getSize))
+            .ifPresent(peer -> {
+              if (tronNetDelegate.containBlock(new BlockId(item.getHash()))) {
+                invToFetch.remove(item);
+                return;
+              }
+              if (!peer.checkAndPutAdvInvRequest(item, now)) {
+                return;
+              }
+              if (peer.isDisconnect()) {
+                peer.getAdvInvRequest().remove(item, now);
+                return;
+              }
+              invSender.add(item, peer);
               invToFetch.remove(item);
             });
       });

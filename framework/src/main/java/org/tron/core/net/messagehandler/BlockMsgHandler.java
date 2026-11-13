@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -79,9 +80,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block time error");
     }
 
-    if (!fastForward && !peer.isRelayPeer()) {
-      check(peer, blockMessage);
-    }
+    check(peer, blockMessage);
 
     blockMessage.sanitize();
 
@@ -131,12 +130,21 @@ public class BlockMsgHandler implements TronMsgHandler {
   }
 
   private void check(PeerConnection peer, BlockMessage msg) throws P2pException {
-    Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
-    if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest()
-            .containsKey(item)) {
-      logger.error("Receive bad block {} from peer {}, with no request",
-              msg.getBlockId(), peer.getInetSocketAddress());
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
+    if (!fastForward && !peer.isRelayPeer()) {
+      Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
+      if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest()
+          .containsKey(item)) {
+        logger.error("Receive bad block {} from peer {}, with no request",
+            msg.getBlockId(), peer.getInetSocketAddress());
+        throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
+      }
+    }
+
+    BlockCapsule blockCapsule = msg.getBlockCapsule();
+    if (blockCapsule.getNum() <= 0
+        || blockCapsule.getParentHashStr().size() != Sha256Hash.LENGTH
+        || new BlockId(blockCapsule.getParentHash()).getNum() != blockCapsule.getNum() - 1) {
+      throw new P2pException(TypeEnum.BAD_BLOCK, "block number does not follow parent");
     }
   }
 

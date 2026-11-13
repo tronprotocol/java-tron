@@ -59,7 +59,7 @@ public class FetchBlockService {
     ExecutorServiceManager.shutdownAndAwaitTermination(fetchBlockWorkerExecutor, esName);
   }
 
-  public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
+  public synchronized void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
     if (sha256HashList.size() > 0) {
       logger.info("Begin fetch block {} from {}",
           new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
@@ -71,16 +71,18 @@ public class FetchBlockService {
     sha256HashList.stream().filter(sha256Hash -> new BlockCapsule.BlockId(sha256Hash).getNum()
         == chainBaseManager.getHeadBlockNum() + 1)
         .findFirst().ifPresent(sha256Hash -> {
-          long now = System.currentTimeMillis();
-          fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, now);
-          Metrics.counterInc(MetricKeys.Counter.BLOCK_FETCH_ARMED, 1);
-          logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
-              peer.getInetAddress(), now);
+          Long requestTime = peer.getAdvInvRequest().get(new Item(sha256Hash, InventoryType.BLOCK));
+          if (requestTime != null) {
+            fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, requestTime);
+            Metrics.counterInc(MetricKeys.Counter.BLOCK_FETCH_ARMED, 1);
+            logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+                peer.getInetAddress(), requestTime);
+          }
         });
   }
 
 
-  public void blockFetchSuccess(Sha256Hash sha256Hash) {
+  public synchronized void blockFetchSuccess(Sha256Hash sha256Hash) {
     logger.info("Fetch block success, {}", new BlockCapsule.BlockId(sha256Hash).getString());
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
     if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
@@ -89,15 +91,21 @@ public class FetchBlockService {
     this.fetchBlockInfo = null;
   }
 
-  private void fetchBlockProcess(FetchBlockInfo fetchBlock) {
-    if (null == fetchBlock) {
+  public synchronized void onDisconnect(PeerConnection peer) {
+    if (fetchBlockInfo != null && fetchBlockInfo.getPeer().equals(peer)) {
+      fetchBlockInfo = null;
+    }
+  }
+
+  private synchronized void fetchBlockProcess(FetchBlockInfo fetchBlock) {
+    if (null == fetchBlock || fetchBlockInfo != fetchBlock) {
       return;
     }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
+    long now = System.currentTimeMillis();
     Optional<PeerConnection> optionalPeerConnection = tronNetDelegate.getActivePeer().stream()
-        .filter(PeerConnection::isIdle)
         .filter(filterPeer -> !filterPeer.equals(fetchBlock.getPeer()))
-        .filter(filterPeer -> filterPeer.getAdvInvReceive().getIfPresent(item) != null)
+        .filter(filterPeer -> filterPeer.canFetchBlock(item, now))
         // Seeded estimates are clamped to the fetch timeout; the unseeded channel-latency
         // fallback is not, but min() ordering and the saturation gate keep it safe.
         .min(Comparator.comparingDouble(this::getPeerLatency));

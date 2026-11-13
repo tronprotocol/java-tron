@@ -163,7 +163,7 @@ public class BlockAlreadyKnownCounterTest {
   }
 
   private BlockMessage newBlockMessage(long number) {
-    BlockCapsule capsule = new BlockCapsule(number, Sha256Hash.ZERO_HASH,
+    BlockCapsule capsule = new BlockCapsule(number, new BlockId(Sha256Hash.ZERO_HASH, number - 1),
         System.currentTimeMillis() - 60_000L,
         ByteString.copyFrom(ECKey.fromPrivate(BigInteger.TEN).getAddress()));
     return new BlockMessage(capsule);

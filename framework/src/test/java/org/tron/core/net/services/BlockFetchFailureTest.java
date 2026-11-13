@@ -285,6 +285,10 @@ public class BlockFetchFailureTest {
     ReflectUtils.setFieldValue(handler, "advService", adv);
     PeerConnection sender = newPeer(10001);
     PeerConnection other = newPeer(10002);
+    sender.setNeedSyncFromPeer(false);
+    sender.setNeedSyncFromUs(false);
+    other.setNeedSyncFromPeer(false);
+    other.setNeedSyncFromUs(false);
     BlockCapsule block = newBlock();
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
@@ -323,6 +327,10 @@ public class BlockFetchFailureTest {
     ReflectUtils.setFieldValue(handler, "fetchBlockService", fetch);
     PeerConnection sender = newPeer(10001);
     PeerConnection other = newPeer(10002);
+    sender.setNeedSyncFromPeer(false);
+    sender.setNeedSyncFromUs(false);
+    other.setNeedSyncFromPeer(false);
+    other.setNeedSyncFromUs(false);
     BlockCapsule block = newBlock();
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
