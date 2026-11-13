@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
+import static com.google.common.primitives.Bytes.concat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,6 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,6 +103,158 @@ public class JsonRpcServletTest {
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertEquals(-32700, body.get("error").get("code").asInt());
+  }
+
+  // --- request body bytes ---
+
+  @Test
+  public void malformedUtf8_isRejectedBeforeDispatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    // Each sequence replaces the leading 'w' of web3_clientVersion. The overlong forms decode
+    // to 'w' in a lenient parser, so they reach the real method unless rejected up front.
+    byte[][] sequences = {
+        {(byte) 0xC1, (byte) 0xB7},
+        {(byte) 0xE0, (byte) 0x81, (byte) 0xB7},
+        {(byte) 0xED, (byte) 0xA0, (byte) 0x80},
+        {(byte) 0xF4, (byte) 0x90, (byte) 0x80, (byte) 0x80}};
+    for (byte[] sequence : sequences) {
+      byte[] single = concat(utf8("{\"jsonrpc\":\"2.0\",\"method\":\""), sequence,
+          utf8("eb3_clientVersion\",\"id\":1}"));
+      byte[] notification = concat(utf8("{\"jsonrpc\":\"2.0\",\"method\":\""), sequence,
+          utf8("eb3_clientVersion\"}"));
+      byte[] batch = concat(utf8("["), single, utf8("]"));
+      for (byte[] body : Arrays.asList(single, notification, batch)) {
+        assertParseError(Arrays.toString(body), doPost(body));
+      }
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).web3ClientVersion();
+  }
+
+  @Test
+  public void wellFormedNonAsciiInput_isDispatched() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    when(rpc.web3Sha3(any())).thenReturn("0x1");
+    String twoBytes = new String(Character.toChars(0x7FF));
+    String chinese = "中文";
+    String emoji = new String(Character.toChars(0x1F600));
+    String maxCodePoint = new String(Character.toChars(0x10FFFF));
+    String[] params = {twoBytes, chinese, emoji, maxCodePoint, "\\u00e9"};
+    String[] expected = {twoBytes, chinese, emoji, maxCodePoint, "é"};
+    for (int i = 0; i < params.length; i++) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\","
+          + "\"params\":[\"" + params[i] + "\"],\"id\":1}");
+      assertEquals(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}"),
+          MAPPER.readTree(resp.getContentAsByteArray()));
+      verify(rpc).web3Sha3(expected[i]);
+    }
+  }
+
+  @Test
+  public void utf8ByteOrderMark_isAccepted() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    byte[] body = concat(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF},
+        utf8("{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}"));
+
+    MockHttpServletResponse resp = doPost(body);
+
+    assertEquals(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}"),
+        MAPPER.readTree(resp.getContentAsByteArray()));
+    verify(rpc).getLatestBlockNum();
+  }
+
+  @Test
+  public void utf16AndUtf32Bodies_areRejected() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    String chinese = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"中\"],\"id\":1}";
+    String accented = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"é\"],\"id\":1}";
+    for (String charset : Arrays.asList("UTF-16LE", "UTF-16BE", "UTF-32LE", "UTF-32BE")) {
+      for (String body : Arrays.asList(request, chinese, accented)) {
+        assertParseError(charset + " " + body, doPost(body.getBytes(Charset.forName(charset))));
+      }
+    }
+    List<byte[]> withByteOrderMark = Arrays.asList(
+        request.getBytes(StandardCharsets.UTF_16),
+        concat(new byte[] {(byte) 0xFF, (byte) 0xFE}, request.getBytes(StandardCharsets.UTF_16LE)));
+    for (byte[] body : withByteOrderMark) {
+      assertParseError(Arrays.toString(body), doPost(body));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+    verify(rpc, never()).web3Sha3(any());
+  }
+
+  @Test
+  public void rawNulByte_isRejected() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String prefix = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"a";
+    String suffix = "b\"],\"id\":1}";
+    List<byte[]> bodies = Arrays.asList(
+        concat(utf8(prefix), new byte[] {0}, utf8(suffix)),
+        concat(utf8(prefix + suffix), new byte[] {0}),
+        concat(new byte[] {0}, utf8(prefix + suffix)));
+    for (byte[] body : bodies) {
+      assertParseError(Arrays.toString(body), doPost(body));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).web3Sha3(any());
+  }
+
+  @Test
+  public void escapedNulCharacter_isDispatched() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    when(rpc.web3Sha3(any())).thenReturn("0x1");
+
+    MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\","
+        + "\"params\":[\"a\\u0000b\"],\"id\":1}");
+
+    assertEquals(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}"),
+        MAPPER.readTree(resp.getContentAsByteArray()));
+    verify(rpc).web3Sha3("a" + (char) 0 + "b");
+  }
+
+  @Test
+  public void trailingContent_isRejectedBeforeDispatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"}";
+    List<String> bodies = Arrays.asList(
+        request + " " + request,
+        request + "\n" + request,
+        request + request,
+        request + " xyz",
+        request + "}",
+        "[" + request + "] " + request,
+        "[" + request + "]]",
+        notification + " " + notification,
+        "1 2",
+        "\"x\" {");
+
+    for (String body : bodies) {
+      assertParseError(body, doPost(body));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  @Test
+  public void trailingWhitespace_isAccepted() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    JsonNode expected = MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}");
+
+    for (String whitespace : Arrays.asList(" ", "\n", "\r\n", "\t", " \r\n\t ")) {
+      MockHttpServletResponse resp = doPost(request + whitespace);
+      assertEquals(whitespace, expected, MAPPER.readTree(resp.getContentAsByteArray()));
+    }
+    MockHttpServletResponse batch = doPost("[" + request + "]\n");
+    assertEquals(MAPPER.createArrayNode().add(expected),
+        MAPPER.readTree(batch.getContentAsByteArray()));
+    MockHttpServletResponse withBom = doPost(concat(
+        new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, utf8(request + "\r\n")));
+    assertEquals(expected, MAPPER.readTree(withBom.getContentAsByteArray()));
+    verify(rpc, times(7)).getLatestBlockNum();
   }
 
   // --- batch size limit ---
@@ -322,14 +476,13 @@ public class JsonRpcServletTest {
   public void allowedNameOutsideTopLevelMethod_isNotDispatched() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
     String unknown = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\"";
-    List<String> bodies = Arrays.asList(
-        unknown + ",\"params\":[{\"method\":\"eth_blockNumber\"}],\"id\":1}",
-        unknown + ",\"id\":1}{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}");
 
-    for (String body : bodies) {
-      MockHttpServletResponse resp = doPost(body);
-      assertEquals(methodNotFound("1"), MAPPER.readTree(resp.getContentAsByteArray()));
-    }
+    MockHttpServletResponse nested = doPost(
+        unknown + ",\"params\":[{\"method\":\"eth_blockNumber\"}],\"id\":1}");
+    assertEquals(methodNotFound("1"), MAPPER.readTree(nested.getContentAsByteArray()));
+    MockHttpServletResponse trailing = doPost(
+        unknown + ",\"id\":1}{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}");
+    assertParseError("trailing request", trailing);
     verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
     verify(rpc, never()).getLatestBlockNum();
   }
@@ -1858,10 +2011,31 @@ public class JsonRpcServletTest {
     return resp;
   }
 
+  private MockHttpServletResponse doPost(byte[] body) throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/jsonrpc");
+    request.setContent(body);
+    MockHttpServletResponse resp = new MockHttpServletResponse();
+    servlet.callDoPost(request, resp);
+    return resp;
+  }
+
   private void doPost(String body, HttpServletResponse response) throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/jsonrpc");
     request.setContent(body.getBytes(StandardCharsets.UTF_8));
     servlet.callDoPost(request, response);
+  }
+
+  private static void assertParseError(String message, MockHttpServletResponse response)
+      throws IOException {
+    assertEquals(message, 200, response.getStatus());
+    assertEquals(message, "application/json-rpc", response.getContentType());
+    assertEquals(message, MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,"
+        + "\"message\":\"JSON parse error\"},\"id\":null}"),
+        MAPPER.readTree(response.getContentAsByteArray()));
+  }
+
+  private static byte[] utf8(String text) {
+    return text.getBytes(StandardCharsets.UTF_8);
   }
 
   private void assertCleanupFailureDoesNotReplaceFatal(HttpServletResponse response)

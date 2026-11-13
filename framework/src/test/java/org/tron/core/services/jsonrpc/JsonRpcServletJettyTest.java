@@ -1,5 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
+import static com.google.common.primitives.Bytes.concat;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
@@ -15,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -31,6 +34,7 @@ import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -193,6 +197,43 @@ public class JsonRpcServletJettyTest {
     }
   }
 
+  @Test
+  public void malformedUtf8BodyReturnsJsonParseErrorOverHttp() throws Exception {
+    URI endpoint = startServer(true);
+    // 0xC1 0xAF is an overlong encoding of 'o' in test_ok.
+    byte[] body = concat("{\"jsonrpc\":\"2.0\",\"method\":\"test_".getBytes(StandardCharsets.UTF_8),
+        new byte[] {(byte) 0xC1, (byte) 0xAF},
+        "k\",\"params\":[],\"id\":7}".getBytes(StandardCharsets.UTF_8));
+
+    assertParseErrorOverHttp(endpoint, body);
+    Assert.assertEquals(0, fatalService.okCalls.get());
+  }
+
+  @Test
+  public void trailingContentReturnsJsonParseErrorOverHttp() throws Exception {
+    URI endpoint = startServer(true);
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"test_ok\",\"params\":[],\"id\":7}";
+
+    assertParseErrorOverHttp(endpoint,
+        (request + " " + request).getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals(0, fatalService.okCalls.get());
+  }
+
+  private void assertParseErrorOverHttp(URI endpoint, byte[] body) throws IOException {
+    HttpPost request = new HttpPost(endpoint);
+    request.setEntity(new ByteArrayEntity(body, ContentType.APPLICATION_JSON));
+
+    try (CloseableHttpResponse response = client.execute(request)) {
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      Assert.assertEquals("application/json-rpc",
+          ContentType.get(response.getEntity()).getMimeType());
+      ObjectMapper mapper = new ObjectMapper();
+      Assert.assertEquals(mapper.readTree("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,"
+              + "\"message\":\"JSON parse error\"},\"id\":null}"),
+          mapper.readTree(EntityUtils.toByteArray(response.getEntity())));
+    }
+  }
+
   public interface FatalService {
 
     @JsonRpcMethod("test_fatal")
@@ -205,6 +246,7 @@ public class JsonRpcServletJettyTest {
   private static class FatalServiceImpl implements FatalService {
 
     private final AtomicBoolean invoked = new AtomicBoolean();
+    private final AtomicInteger okCalls = new AtomicInteger();
 
     @Override
     public String fatal() {
@@ -214,6 +256,7 @@ public class JsonRpcServletJettyTest {
 
     @Override
     public String ok() {
+      okCalls.incrementAndGet();
       return "ok";
     }
   }
