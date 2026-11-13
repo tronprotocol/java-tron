@@ -14,11 +14,11 @@ public class Item {
   private static final HashFunction ID_HASH = newIdHash();
 
   @Getter
-  private Sha256Hash hash;
+  private final Sha256Hash hash;
   @Getter
-  private InventoryType type;
+  private final InventoryType type;
   @Getter
-  private long time;
+  private final long time;
   @Getter(AccessLevel.NONE)
   private final int idHash;
 
