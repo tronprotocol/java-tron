@@ -192,6 +192,39 @@ public class BlockFetchSchedulingTest {
   }
 
   @Test
+  public void pendingHigherBlockIsNotPromotedWhenHeadAdvances() throws Exception {
+    Item higher = blockItem(102);
+    announce(first, item);
+    Assert.assertTrue(adv.addInv(item));
+    announce(second, higher);
+    Assert.assertTrue(adv.addInv(higher));
+    Assert.assertTrue(second.getAdvInvRequest().containsKey(higher));
+    Assert.assertEquals(item.getHash(), ReflectUtils.getFieldObject(state(), "hash"));
+    // Model a pending request that has already exceeded the short fallback timeout.
+    long requestTime = System.currentTimeMillis() - 2_000;
+    second.getAdvInvRequest().put(higher, requestTime);
+
+    first.getAdvInvRequest().remove(item);
+    fetch.blockFetchSuccess(item.getHash());
+    ChainBaseManager chain = ReflectUtils.getFieldValue(fetch, "chainBaseManager");
+    when(chain.getHeadBlockNum()).thenReturn(101L);
+    when(delegate.getHeadBlockId()).thenReturn(new BlockId(item.getHash()));
+    announce(first, higher);
+    Assert.assertTrue(fetch.canFetchBlock(first, higher, System.currentTimeMillis()));
+    Assert.assertFalse(adv.addInv(higher));
+    consume();
+    tick(state());
+
+    // The existing request remains responsible; head advancement does not arm a fallback.
+    Assert.assertNull(state());
+    Assert.assertEquals(Long.valueOf(requestTime), second.getAdvInvRequest().get(higher));
+    Assert.assertFalse(first.getAdvInvRequest().containsKey(higher));
+    Assert.assertFalse(pending().containsKey(higher));
+    verify(first).sendMessage(any(FetchInvDataMessage.class));
+    verify(second).sendMessage(any(FetchInvDataMessage.class));
+  }
+
+  @Test
   public void transactionRequestsStillBatchTogether() throws Exception {
     Item other = new Item(new BlockId(Sha256Hash.ZERO_HASH, 1), InventoryType.TRX);
     announce(first, transaction());
