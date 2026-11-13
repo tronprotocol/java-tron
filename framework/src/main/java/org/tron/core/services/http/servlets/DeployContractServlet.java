@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
@@ -78,6 +79,9 @@ public class DeployContractServlet extends RateLimiterServlet {
       }
       String name = jsonObject.getString("name");
       if (!Strings.isNullOrEmpty(name)) {
+        if (JsonFormat.hasUnpairedSurrogate(name)) {
+          throw new InvalidHttpParameterException("Invalid name: contains an unpaired surrogate");
+        }
         smartBuilder.setName(name);
       }
 
