@@ -346,7 +346,8 @@ public class AdvService {
       blocks.forEach(item -> {
         if (blockCache.getIfPresent(item) != null
             || tronNetDelegate.containBlock(new BlockId(item.getHash()))
-            || peers.stream().anyMatch(peer -> peer.getAdvInvRequest().containsKey(item))) {
+            || peers.stream().anyMatch(peer -> !peer.isDisconnect()
+                && peer.getAdvInvRequest().containsKey(item))) {
           invToFetch.remove(item);
           return;
         }

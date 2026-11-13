@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -375,6 +376,58 @@ public class BlockFetchSchedulingTest {
     Assert.assertNotNull(recovered);
     Assert.assertSame(recovered, state());
     verify(second, never()).sendMessage(any());
+  }
+
+  @Test
+  public void stalePeerSnapshotDoesNotSuppressRecoveredBlock() throws Exception {
+    assertStaleSnapshotPreservesRecovery(false);
+  }
+
+  @Test
+  public void stalePeerSnapshotKeepsRecoveryQueuedForBusySource() throws Exception {
+    assertStaleSnapshotPreservesRecovery(true);
+  }
+
+  private void assertStaleSnapshotPreservesRecovery(boolean busy) throws Exception {
+    announce(first, item);
+    Assert.assertTrue(adv.addInv(item));
+    announce(second, item);
+    Item busyBlock = blockItem(102);
+    if (busy) {
+      second.getAdvInvRequest().put(busyBlock, System.currentTimeMillis());
+    }
+    AtomicBoolean disconnected = new AtomicBoolean();
+    when(delegate.getActivePeer()).thenAnswer(invocation -> {
+      List<PeerConnection> snapshot = new ArrayList<>(peers);
+      if (disconnected.compareAndSet(false, true)) {
+        // Recovery runs after the snapshot is captured but before the service monitor is held.
+        peers.remove(first);
+        when(first.getChannel().isDisconnect()).thenReturn(true);
+        adv.onDisconnect(first);
+        awaitRecovery();
+        Assert.assertTrue(pending().containsKey(item));
+        Assert.assertTrue(first.getAdvInvRequest().containsKey(item));
+        Assert.assertNull(state());
+      }
+      return snapshot;
+    });
+
+    consume();
+    // Transport cleanup can finish after recovery and the stale scheduling pass.
+    first.getAdvInvRequest().clear();
+    if (busy) {
+      Assert.assertTrue(pending().containsKey(item));
+      Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+      verify(second, never()).sendMessage(any());
+      second.getAdvInvRequest().remove(busyBlock);
+      consume();
+    }
+
+    Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
+    Assert.assertFalse(pending().containsKey(item));
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+    verify(second).sendMessage(any(FetchInvDataMessage.class));
+    Assert.assertFalse(adv.addInv(item));
   }
 
   @Test
