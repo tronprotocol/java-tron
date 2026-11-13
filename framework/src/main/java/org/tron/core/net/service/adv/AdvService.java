@@ -273,7 +273,7 @@ public class AdvService {
       fetchExecutor.execute(() -> {
         try {
           fetchBlockService.onDisconnect(peer);
-          blocks.forEach(item -> recoverFetchOnDisconnect(peer, item));
+          blocks.forEach(this::recoverFetchOnDisconnect);
         } catch (Exception e) {
           logger.error("Recover disconnected peer fetches failed", e);
         }
@@ -284,21 +284,21 @@ public class AdvService {
     }
   }
 
-  private synchronized void recoverFetchOnDisconnect(PeerConnection peer, Item item) {
-    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(p -> !p.equals(peer) && !p.isDisconnect()).collect(Collectors.toList());
+  private synchronized void recoverFetchOnDisconnect(Item item) {
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer();
     if (blockCache.getIfPresent(item) != null
         || tronNetDelegate.containBlock(new BlockId(item.getHash()))) {
       return;
     }
     Optional<PeerConnection> pending = peers.stream()
-        .filter(p -> p.getAdvInvRequest().containsKey(item)).findFirst();
+        .filter(p -> !p.isDisconnect() && p.getAdvInvRequest().containsKey(item)).findFirst();
     if (pending.isPresent()) {
       // Reuse the original request and deadline without sending it again.
       fetchBlockService.fetchBlock(Collections.singletonList(item.getHash()), pending.get());
       return;
     }
-    if (peers.stream().anyMatch(p -> p.getAdvInvReceive().getIfPresent(item) != null)) {
+    if (peers.stream().anyMatch(p -> !p.isDisconnect()
+        && p.getAdvInvReceive().getIfPresent(item) != null)) {
       invToFetch.put(item, System.currentTimeMillis());
     } else {
       invToFetch.remove(item);
