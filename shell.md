@@ -18,9 +18,20 @@ For each download the release key is fetched by its fingerprint from keys.openpg
 
 # Usage
 
+## Working directory
+
+`start.sh` uses the directory it is run from as the node directory, not the directory that contains the script. By default `FullNode.jar`, `config.conf` and the database directory `output-directory` are read from there, and `start.log`, the pid file, `gc.log` and the node's `logs/` are written there. `--release` and `-cb` set the node up in `FullNode/` under that directory; once a node has been started there, `--run` and `--stop` from the parent directory act on it as well. Change into the node directory before running the script:
+
+```
+cd /data/tron
+sh start.sh --run
+```
+
+Running `/data/tron/start.sh --run` from another directory looks for `FullNode.jar` in that other directory and exits with `jar file FullNode.jar not exist`. With `-j`, `-c` and `-d` the jar, config and database can be elsewhere, but `start.log`, the pid file and the logs still go to the directory the script is run from, so run `--stop` there as well.
+
 ## Examples
 
-* Start the `FullNode.jar` (`start.sh`, `config.conf` and `FullNode.jar` in the same directory.)
+* Start the `FullNode.jar` from the directory that holds it and `config.conf`.
 
   ```
   sh start.sh --run
