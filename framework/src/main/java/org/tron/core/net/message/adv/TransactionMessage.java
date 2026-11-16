@@ -1,5 +1,6 @@
 package org.tron.core.net.message.adv;
 
+import com.google.protobuf.CodedInputStream;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -13,7 +14,9 @@ public class TransactionMessage extends TronMessage {
 
   public TransactionMessage(byte[] data) throws Exception {
     super(data);
-    this.transactionCapsule = new TransactionCapsule(getCodedInputStream(data));
+    CodedInputStream input = getCodedInputStream(data);
+    this.transactionCapsule = new TransactionCapsule(input);
+    input.checkLastTagWas(0);
     this.type = MessageTypes.TRX.asByte();
     if (Message.isFilter()) {
       compareBytes(data, transactionCapsule.getInstance().toByteArray());
