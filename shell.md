@@ -20,18 +20,18 @@ For each download the release key is fetched by its fingerprint from keys.openpg
 
 ## Working directory
 
-Run `start.sh` from the node directory. By default the script uses `FullNode.jar`, `config.conf` and `output-directory` in the directory it is run from, not the one that contains it, and writes `start.log`, the pid file and the logs there.
+Run `start.sh` from the node directory. By default the script uses `FullNode.jar`, `config.conf` and `output-directory` in the directory it is run from (for example `/data`), not the one that contains it, and writes `start.log`, the pid file and the logs there.
 
 ```
-cd /data/tron
+cd /data
 sh start.sh --run
 ```
 
-From another directory, `/data/tron/start.sh --run` exits with `jar file FullNode.jar not exist`.
+From another directory, `/data/start.sh --run` exits with `jar file FullNode.jar not exist`.
 
 ## Examples
 
-* Start the `FullNode.jar` from the directory that holds it and `config.conf`.
+* Start the `FullNode.jar` (`start.sh`, `config.conf` and `FullNode.jar` in the same directory.)
 
   ```
   sh start.sh --run
