@@ -142,6 +142,9 @@ public class SyncService {
     synchronized (blockJustReceived) {
       UnparsedBlock unparsedBlock = new UnparsedBlock(
           blockMessage.getBlockId(), blockMessage.getData());
+      // BlockID equality may match an older UnparsedBlock containing different bytes.
+      // Remove that stored key before putting this response's bytes and peer together.
+      blockJustReceived.remove(unparsedBlock);
       blockJustReceived.put(unparsedBlock, peer);
     }
     handleFlag = true;
@@ -289,6 +292,8 @@ public class SyncService {
   private synchronized void handleSyncBlock() {
 
     synchronized (blockJustReceived) {
+      // putAll retains old key objects for equal IDs; replace those keys as well.
+      blockJustReceived.keySet().forEach(blockWaitToProcess::remove);
       blockWaitToProcess.putAll(blockJustReceived);
       blockJustReceived.clear();
     }
