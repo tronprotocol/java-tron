@@ -13,9 +13,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
@@ -128,6 +131,74 @@ public class SyncServiceTest extends BaseMethodTest {
     Assert.assertEquals(1, blockJustReceived.size());
     UnparsedBlock stored = blockJustReceived.keySet().iterator().next();
     Assert.assertEquals(blockMessage.getBlockId(), stored.getBlockId());
+  }
+
+  @Test
+  public void receivedBlockReplacementKeepsBytesAndPeerTogether() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(false);
+  }
+
+  @Test
+  public void waitingBlockReplacementKeepsBytesAndPeerTogether() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(true);
+  }
+
+  private void assertReplacementKeepsBytesAndPeerTogether(boolean waiting) throws Exception {
+    SyncService sync = new SyncService();
+    try (MockedStatic<Message> messages =
+        Mockito.mockStatic(Message.class, Mockito.CALLS_REAL_METHODS)) {
+      messages.when(Message::isFilter).thenReturn(false);
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.emptyList());
+      Mockito.when(delegate.getSolidBlockId())
+          .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+      Mockito.doCallRealMethod().when(delegate).validBlock(Mockito.any(BlockCapsule.class));
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
+      PeerConnection first = mock(PeerConnection.class);
+      PeerConnection second = mock(PeerConnection.class);
+      BlockCapsule latest = new BlockCapsule(Protocol.Block.newBuilder()
+          .setBlockHeader(Protocol.BlockHeader.newBuilder()
+              .setRawData(Protocol.BlockHeader.raw.newBuilder().setNumber(1)
+                  .setTxTrieRoot(Sha256Hash.ZERO_HASH.getByteString())))
+          .build());
+      BlockCapsule stale = new BlockCapsule(latest.getInstance().toBuilder()
+          .addTransactions(Protocol.Transaction.getDefaultInstance()).build());
+      Assert.assertEquals(stale.getBlockId(), latest.getBlockId());
+
+      sync.processBlock(first, new BlockMessage(stale));
+      if (waiting) {
+        ReflectUtils.invokeMethod(sync, "handleSyncBlock");
+      }
+      sync.processBlock(second, new BlockMessage(latest));
+      if (waiting) {
+        ReflectUtils.invokeMethod(sync, "handleSyncBlock");
+      }
+
+      Map<UnparsedBlock, PeerConnection> queue =
+          (Map<UnparsedBlock, PeerConnection>) ReflectUtils.getFieldObject(sync,
+              waiting ? "blockWaitToProcess" : "blockJustReceived");
+      Assert.assertEquals(1, queue.size());
+      UnparsedBlock queued = queue.keySet().iterator().next();
+      Assert.assertSame(second, queue.get(queued));
+      Assert.assertArrayEquals(latest.getData(), queued.getData());
+
+      BlockCapsule.BlockId next = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+      Mockito.when(second.getSyncBlockToFetch()).thenReturn(
+          new ConcurrentLinkedDeque<>(Arrays.asList(latest.getBlockId(), next)));
+      Mockito.when(second.getSyncBlockInProcess()).thenReturn(ConcurrentHashMap.newKeySet());
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(second));
+      ReflectUtils.invokeMethod(sync, "handleSyncBlock");
+
+      ArgumentCaptor<BlockCapsule> processed = ArgumentCaptor.forClass(BlockCapsule.class);
+      Mockito.verify(delegate).processBlock(processed.capture(), Mockito.eq(true));
+      Assert.assertArrayEquals(latest.getData(), processed.getValue().getData());
+      Mockito.verify(second).setBlockBothHave(latest.getBlockId());
+      Mockito.verify(second, Mockito.never()).disconnect(Mockito.any(Protocol.ReasonCode.class));
+    } finally {
+      sync.close();
+    }
   }
 
   @Test
