@@ -9,6 +9,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.UnknownFieldSet;
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
@@ -62,6 +64,53 @@ public class TransactionCapsuleTest extends BaseTest {
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         StringUtil.hexString2ByteString(OWNER_ADDRESS), AccountType.Normal, 10_000_000_000L);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+  }
+
+  @Test
+  public void transactionCapsuleChecksEndTagWithEitherFilterSetting() throws Exception {
+    Transaction transaction = transactionWithEndTagByte();
+    byte[] canonical = transaction.toByteArray();
+    Assert.assertEquals(0x0c, canonical[canonical.length - 1]);
+    DynamicPropertiesStore properties = chainBaseManager.getDynamicPropertiesStore();
+    long originalFilter = properties.getAllowProtoFilterNum();
+    try {
+      for (int filter : new int[] {0, 1}) {
+        properties.saveAllowProtoFilterNum(filter);
+        Assert.assertEquals(transaction, new TransactionCapsule(canonical).getInstance());
+        for (byte[] suffix : new byte[][] {{0x0c}, {0x14}, {0x0c, 0x08, 0x01}}) {
+          byte[] malformed = Arrays.copyOf(canonical, canonical.length + suffix.length);
+          System.arraycopy(suffix, 0, malformed, canonical.length, suffix.length);
+          Assert.assertThrows(BadItemException.class, () -> new TransactionCapsule(malformed));
+        }
+      }
+    } finally {
+      properties.saveAllowProtoFilterNum(originalFilter);
+    }
+  }
+
+  @Test
+  public void transactionCapsulePreservesUnknownFieldFiltering() throws Exception {
+    Transaction transaction = transactionWithEndTagByte();
+    Transaction withUnknown = transaction.toBuilder()
+        .setUnknownFields(UnknownFieldSet.newBuilder().addField(100,
+            UnknownFieldSet.Field.newBuilder().addVarint(7).build()).build())
+        .build();
+    DynamicPropertiesStore properties = chainBaseManager.getDynamicPropertiesStore();
+    long originalFilter = properties.getAllowProtoFilterNum();
+    try {
+      for (int filter : new int[] {0, 1}) {
+        properties.saveAllowProtoFilterNum(filter);
+        TransactionCapsule capsule = new TransactionCapsule(withUnknown.toByteArray());
+        Assert.assertEquals(filter == 0 ? withUnknown : transaction, capsule.getInstance());
+      }
+    } finally {
+      properties.saveAllowProtoFilterNum(originalFilter);
+    }
+  }
+
+  private static Transaction transactionWithEndTagByte() {
+    return Transaction.newBuilder().setRawData(raw.newBuilder().setTimestamp(1))
+        .addSignature(ByteString.copyFrom(new byte[] {0x0c})).build();
   }
 
   @Test
