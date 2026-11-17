@@ -1,6 +1,5 @@
 package org.tron.consensus.pbft.message;
 
-import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
@@ -29,9 +28,7 @@ public abstract class PbftBaseMessage extends Message {
 
   public PbftBaseMessage(byte type, byte[] data) throws IOException, P2pException {
     super(type, data);
-    CodedInputStream input = getCodedInputStream(data);
-    this.pbftMessage = PBFTMessage.parseFrom(input);
-    input.checkLastTagWas(0);
+    this.pbftMessage = PBFTMessage.parseFrom(getCodedInputStream(data));
     if (isFilter()) {
       compareBytes(data, pbftMessage.toByteArray());
     }

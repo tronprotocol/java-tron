@@ -135,15 +135,36 @@ public class SyncServiceTest extends BaseMethodTest {
 
   @Test
   public void receivedBlockReplacementKeepsBytesAndPeerTogether() throws Exception {
-    assertReplacementKeepsBytesAndPeerTogether(false);
+    assertReplacementKeepsBytesAndPeerTogether(false, false, true);
   }
 
   @Test
   public void waitingBlockReplacementKeepsBytesAndPeerTogether() throws Exception {
-    assertReplacementKeepsBytesAndPeerTogether(true);
+    assertReplacementKeepsBytesAndPeerTogether(true, false, true);
   }
 
-  private void assertReplacementKeepsBytesAndPeerTogether(boolean waiting) throws Exception {
+  @Test
+  public void receivedBlockReplacementKeepsSameProviderMarker() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(false, true, true);
+  }
+
+  @Test
+  public void waitingBlockReplacementKeepsSameProviderMarker() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(true, true, true);
+  }
+
+  @Test
+  public void invalidReceivedReplacementAllowsRetryFromPreviousProvider() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(false, false, false);
+  }
+
+  @Test
+  public void invalidWaitingReplacementAllowsRetryFromPreviousProvider() throws Exception {
+    assertReplacementKeepsBytesAndPeerTogether(true, false, false);
+  }
+
+  private void assertReplacementKeepsBytesAndPeerTogether(boolean waiting, boolean sameProvider,
+      boolean latestValid) throws Exception {
     SyncService sync = new SyncService();
     try (MockedStatic<Message> messages =
         Mockito.mockStatic(Message.class, Mockito.CALLS_REAL_METHODS)) {
@@ -157,7 +178,11 @@ public class SyncServiceTest extends BaseMethodTest {
       ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
       ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
       PeerConnection first = mock(PeerConnection.class);
-      PeerConnection second = mock(PeerConnection.class);
+      PeerConnection second = sameProvider ? first : mock(PeerConnection.class);
+      Mockito.when(first.getSyncBlockInProcess()).thenReturn(ConcurrentHashMap.newKeySet());
+      if (!sameProvider) {
+        Mockito.when(second.getSyncBlockInProcess()).thenReturn(ConcurrentHashMap.newKeySet());
+      }
       BlockCapsule latest = new BlockCapsule(Protocol.Block.newBuilder()
           .setBlockHeader(Protocol.BlockHeader.newBuilder()
               .setRawData(Protocol.BlockHeader.raw.newBuilder().setNumber(1)
@@ -167,11 +192,13 @@ public class SyncServiceTest extends BaseMethodTest {
           .addTransactions(Protocol.Transaction.getDefaultInstance()).build());
       Assert.assertEquals(stale.getBlockId(), latest.getBlockId());
 
-      sync.processBlock(first, new BlockMessage(stale));
+      first.getSyncBlockInProcess().add(latest.getBlockId());
+      sync.processBlock(first, new BlockMessage(latestValid ? stale : latest));
       if (waiting) {
         ReflectUtils.invokeMethod(sync, "handleSyncBlock");
       }
-      sync.processBlock(second, new BlockMessage(latest));
+      second.getSyncBlockInProcess().add(latest.getBlockId());
+      sync.processBlock(second, new BlockMessage(latestValid ? latest : stale));
       if (waiting) {
         ReflectUtils.invokeMethod(sync, "handleSyncBlock");
       }
@@ -182,14 +209,42 @@ public class SyncServiceTest extends BaseMethodTest {
       Assert.assertEquals(1, queue.size());
       UnparsedBlock queued = queue.keySet().iterator().next();
       Assert.assertSame(second, queue.get(queued));
-      Assert.assertArrayEquals(latest.getData(), queued.getData());
+      Assert.assertArrayEquals((latestValid ? latest : stale).getData(), queued.getData());
+      Assert.assertTrue(second.getSyncBlockInProcess().contains(latest.getBlockId()));
+      if (!sameProvider) {
+        Assert.assertFalse(first.getSyncBlockInProcess().contains(latest.getBlockId()));
+      }
 
       BlockCapsule.BlockId next = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
       Mockito.when(second.getSyncBlockToFetch()).thenReturn(
           new ConcurrentLinkedDeque<>(Arrays.asList(latest.getBlockId(), next)));
-      Mockito.when(second.getSyncBlockInProcess()).thenReturn(ConcurrentHashMap.newKeySet());
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds");
+      requests.put(latest.getBlockId(), second);
       Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(second));
       ReflectUtils.invokeMethod(sync, "handleSyncBlock");
+      Assert.assertFalse(second.getSyncBlockInProcess().contains(latest.getBlockId()));
+
+      if (!latestValid) {
+        Mockito.verify(second).disconnect(Protocol.ReasonCode.BAD_BLOCK);
+        Mockito.verify(delegate, Mockito.never())
+            .processBlock(Mockito.any(BlockCapsule.class), Mockito.anyBoolean());
+        Assert.assertNull(requests.getIfPresent(latest.getBlockId()));
+        Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(first));
+        Mockito.when(first.isNeedSyncFromPeer()).thenReturn(true);
+        Mockito.when(first.isSyncIdle()).thenReturn(true);
+        Mockito.when(first.isFetchAble()).thenReturn(true);
+        Mockito.when(first.getSyncBlockToFetch()).thenReturn(
+            new ConcurrentLinkedDeque<>(Collections.singletonList(latest.getBlockId())));
+        Mockito.when(first.getSyncBlockRequested()).thenReturn(new ConcurrentHashMap<>());
+        ReflectUtils.invokeMethod(sync, "startFetchSyncBlock");
+        Assert.assertSame(first, requests.getIfPresent(latest.getBlockId()));
+        Assert.assertTrue(first.getSyncBlockRequested().containsKey(latest.getBlockId()));
+        Mockito.verify(first).sendMessage(Mockito.any(FetchInvDataMessage.class));
+        Mockito.verify(first, Mockito.never()).disconnect(Mockito.any(Protocol.ReasonCode.class));
+        return;
+      }
 
       ArgumentCaptor<BlockCapsule> processed = ArgumentCaptor.forClass(BlockCapsule.class);
       Mockito.verify(delegate).processBlock(processed.capture(), Mockito.eq(true));

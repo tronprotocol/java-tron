@@ -146,9 +146,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public TransactionCapsule(byte[] data) throws BadItemException {
     try {
-      CodedInputStream input = Message.getCodedInputStream(data);
-      this.transaction = Transaction.parseFrom(input);
-      input.checkLastTagWas(0);
+      this.transaction = Transaction.parseFrom(Message.getCodedInputStream(data));
     } catch (Exception e) {
       throw new BadItemException("Transaction proto data parse exception");
     }
