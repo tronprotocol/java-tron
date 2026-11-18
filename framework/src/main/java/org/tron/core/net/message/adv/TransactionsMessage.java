@@ -1,5 +1,6 @@
 package org.tron.core.net.message.adv;
 
+import com.google.protobuf.CodedInputStream;
 import java.util.List;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.net.message.MessageTypes;
@@ -22,7 +23,9 @@ public class TransactionsMessage extends TronMessage {
   public TransactionsMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.TRXS.asByte();
-    this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream(data));
+    CodedInputStream input = getCodedInputStream(data);
+    this.transactions = Protocol.Transactions.parseFrom(input);
+    input.checkLastTagWas(0);
     if (isFilter()) {
       compareBytes(data, transactions.toByteArray());
       TransactionCapsule.validContractProto(transactions.getTransactionsList());

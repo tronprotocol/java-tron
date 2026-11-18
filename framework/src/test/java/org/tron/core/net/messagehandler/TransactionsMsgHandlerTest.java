@@ -2,6 +2,7 @@ package org.tron.core.net.messagehandler;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.UnknownFieldSet;
 import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Field;
@@ -51,6 +52,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
@@ -61,6 +63,65 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
         TestConstants.TEST_CONF);
 
+  }
+
+  @Test
+  public void transactionChecksEndTagWithEitherFilterSetting() throws Exception {
+    Protocol.Transaction transaction = transactionWithEndTagByte();
+    byte[] canonical = transaction.toByteArray();
+    Assert.assertEquals(0x0c, canonical[canonical.length - 1]);
+    DynamicPropertiesStore properties = chainBaseManager.getDynamicPropertiesStore();
+    long originalFilter = properties.getAllowProtoFilterNum();
+    try {
+      for (int filter : new int[] {0, 1}) {
+        properties.saveAllowProtoFilterNum(filter);
+        Assert.assertEquals(transaction,
+            new TransactionMessage(canonical).getTransactionCapsule().getInstance());
+        for (byte[] malformed : malformedEndTagMessages(canonical)) {
+          Assert.assertThrows(InvalidProtocolBufferException.class,
+              () -> new TransactionMessage(malformed));
+        }
+      }
+    } finally {
+      properties.saveAllowProtoFilterNum(originalFilter);
+    }
+  }
+
+  @Test
+  public void transactionsCheckEndTagWithEitherFilterSetting() throws Exception {
+    Protocol.Transactions transactions = Protocol.Transactions.newBuilder()
+        .addTransactions(transactionWithEndTagByte()).build();
+    byte[] canonical = transactions.toByteArray();
+    Assert.assertEquals(0x0c, canonical[canonical.length - 1]);
+    DynamicPropertiesStore properties = chainBaseManager.getDynamicPropertiesStore();
+    long originalFilter = properties.getAllowProtoFilterNum();
+    try {
+      for (int filter : new int[] {0, 1}) {
+        properties.saveAllowProtoFilterNum(filter);
+        Assert.assertEquals(transactions, new TransactionsMessage(canonical).getTransactions());
+        for (byte[] malformed : malformedEndTagMessages(canonical)) {
+          Assert.assertThrows(InvalidProtocolBufferException.class,
+              () -> new TransactionsMessage(malformed));
+        }
+      }
+    } finally {
+      properties.saveAllowProtoFilterNum(originalFilter);
+    }
+  }
+
+  private Protocol.Transaction transactionWithEndTagByte() {
+    return buildTransferMessage(1).getTransactions().getTransactions(0).toBuilder()
+        .addSignature(ByteString.copyFrom(new byte[] {0x0c})).build();
+  }
+
+  private static List<byte[]> malformedEndTagMessages(byte[] canonical) {
+    List<byte[]> messages = new ArrayList<>();
+    for (byte[] suffix : new byte[][] {{0x0c}, {0x14}, {0x0c, 0x08, 0x01}}) {
+      byte[] malformed = Arrays.copyOf(canonical, canonical.length + suffix.length);
+      System.arraycopy(suffix, 0, malformed, canonical.length, suffix.length);
+      messages.add(malformed);
+    }
+    return messages;
   }
 
   @Test
