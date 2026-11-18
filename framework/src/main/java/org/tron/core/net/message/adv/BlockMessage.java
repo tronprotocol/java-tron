@@ -41,7 +41,7 @@ public class BlockMessage extends TronMessage {
     }
   }
 
-  private static void precheck(byte[] data) throws IOException, P2pException {
+  private void precheck(byte[] data) throws IOException, P2pException {
     if (data.length > MAX_BLOCK_SIZE) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
     }
