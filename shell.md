@@ -119,7 +119,7 @@ From another directory, `/data/start.sh --run` exits with `jar file FullNode.jar
 
 * `--release`
 
-  Get the latest released version of the `jar` package from github.
+  Get the latest released version of the `jar` package and the mainnet `config.conf` from github into `FullNode/`. The `config.conf` and `FullNode.jar` already there are replaced only after both are downloaded and the jar is verified.
 
 * `--upgrade`
 

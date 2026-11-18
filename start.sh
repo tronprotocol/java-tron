@@ -318,25 +318,30 @@ mkdirFullNode() {
 }
 
 # --release / --deploy: sets up $FULL_NODE_DIR with the mainnet config and the latest verified
-# release jar. Exits when the version, the config or the jar cannot be fetched.
+# release jar. Exits when the version, the config or the jar cannot be fetched or verified,
+# leaving an existing config.conf and $JAR_NAME untouched.
 quickStart() {
   full_node_version=$(getLatestReleaseVersion)
   if [[ -n $full_node_version ]]; then
     # Enter $FULL_NODE_DIR, then download the mainnet config and the signed release jar for
-    # this architecture.
+    # this architecture to temporary names; config.conf and $JAR_NAME are replaced only once
+    # both are downloaded and the jar is verified. download and checkSign remove a file that
+    # fails.
     mkdirFullNode
     info "check latest version: $full_node_version"
     info 'download config'
-    # Download to a temporary name first and move it into place only on success, so a failed
-    # re-download in an existing FullNode/ leaves the current config.conf untouched instead of
-    # a later start silently falling back to the config bundled in the jar.
-    download "$MAIN_NET_CONFIG_URL" config.conf.download && mv config.conf.download config.conf || exit 1
-
-    # Download to a temporary name first, so that a failed download or signature check leaves
-    # an existing $JAR_NAME untouched.
-    info "download $full_node_version"
-    downloadRelease "$full_node_version" "$RELEASE_JAR" "$JAR_NAME.download" || exit 1
-    mv "$JAR_NAME.download" "$JAR_NAME"
+    if download "$MAIN_NET_CONFIG_URL" config.conf.download; then
+      info "download $full_node_version"
+      if downloadRelease "$full_node_version" "$RELEASE_JAR" "$JAR_NAME.download"; then
+        # The jar goes first: should the config then fail to move, the new jar is left with the
+        # existing config, as after --upgrade.
+        mv "$JAR_NAME.download" "$JAR_NAME" && mv config.conf.download config.conf || exit 1
+        return 0
+      fi
+      rm -f config.conf.download
+    fi
+    warn "deploy aborted, config.conf and $JAR_NAME are unchanged"
+    exit 1
   else
     # Without a release tag there is nothing to download.
     info 'not getting the latest version'
