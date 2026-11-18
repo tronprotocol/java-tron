@@ -188,6 +188,23 @@ public class NodeConfigTest {
   }
 
   @Test
+  public void testRpcNegativeConnectionIdleAndAgeRejected() {
+    String[][] cases = {
+        {"node { rpc { maxConnectionIdleInMillis = -1 } }",
+            "node.rpc.maxConnectionIdleInMillis must be non-negative, got: -1"},
+        {"node { rpc { maxConnectionAgeInMillis = -1 } }",
+            "node.rpc.maxConnectionAgeInMillis must be non-negative, got: -1"},
+    };
+    for (String[] c : cases) {
+      Config config = withRef(c[0]);
+      TronError exception = assertThrows(TronError.class,
+          () -> NodeConfig.fromConfig(config));
+      assertEquals(PARAMETER_INIT, exception.getErrCode());
+      assertTrue(exception.getMessage().contains(c[1]));
+    }
+  }
+
+  @Test
   public void testRpcRstDefaultsMatchReference() {
     NodeConfig.RpcConfig rpc = new NodeConfig.RpcConfig();
     assertEquals(1000, rpc.getMaxRstStream());
