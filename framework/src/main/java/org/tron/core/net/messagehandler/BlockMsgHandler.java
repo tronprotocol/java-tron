@@ -1,7 +1,6 @@
 package org.tron.core.net.messagehandler;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -50,7 +49,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
-  private int maxBlockSize = BLOCK_SIZE + Constant.ONE_THOUSAND;
+  private int maxBlockSize = BlockMessage.MAX_BLOCK_SIZE;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 

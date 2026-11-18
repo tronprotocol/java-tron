@@ -1,5 +1,6 @@
 package org.tron.core.net;
 
+import static org.tron.core.Constant.MIN_TRANSACTION_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
@@ -67,9 +68,6 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
-
-  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
-  private static final int MIN_TRANSACTION_SIZE = 80;
 
   @Autowired
   private Manager dbManager;
