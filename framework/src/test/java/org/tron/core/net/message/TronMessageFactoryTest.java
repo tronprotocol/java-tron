@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
@@ -14,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
@@ -35,12 +33,12 @@ import org.tron.protos.Protocol.Transaction;
 public class TronMessageFactoryTest {
 
   @Test
-  public void trxIsRejectedBeforeCopyingPayloadRegardlessOfContents() {
+  public void trxIsRejectedBeforeParsingRegardlessOfPayloadContents() {
     byte[][] payloads = {new byte[0], {0x0c}, {0x0a, 0x7f},
         new byte[Parameter.MAX_MESSAGE_LENGTH - 2]};
-    try (MockedStatic<ArrayUtils> arrays = mockStatic(ArrayUtils.class, CALLS_REAL_METHODS)) {
-      arrays.when(() -> ArrayUtils.subarray(any(byte[].class), anyInt(), anyInt()))
-          .thenThrow(new AssertionError("TRX payload must not be copied"));
+    try (MockedStatic<Message> messages = mockStatic(Message.class, CALLS_REAL_METHODS)) {
+      messages.when(() -> Message.getCodedInputStream(any(byte[].class)))
+          .thenThrow(new AssertionError("TRX payload must not be parsed"));
       for (byte[] payload : payloads) {
         P2pException exception = assertThrows(P2pException.class,
             () -> TronMessageFactory.create(withType(MessageTypes.TRX, payload)));

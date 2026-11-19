@@ -24,10 +24,6 @@ public class TronMessageFactory {
     boolean isException = false;
     try {
       byte type = data[0];
-      if (type == MessageTypes.TRX.asByte()) {
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-            MessageTypes.TRX + DATA_LEN + (data.length - 1));
-      }
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (final P2pException e) {
