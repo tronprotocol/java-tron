@@ -263,11 +263,12 @@ upgrade() {
     # $JAR_NAME untouched.
     if downloadRelease "$latest_version" "$RELEASE_JAR" "$JAR_NAME.download"; then
       # Verified: keep the previous jar as ${JAR_NAME}_bak and move the new one into place.
+      # -f: no prompt for a read-only file, as in quickStart.
       if [[ -f $JAR_NAME ]]; then
         info "backup $JAR_NAME"
-        mv "$JAR_NAME" "${JAR_NAME}_bak"
+        mv -f "$JAR_NAME" "${JAR_NAME}_bak"
       fi
-      mv "$JAR_NAME.download" "$JAR_NAME"
+      mv -f "$JAR_NAME.download" "$JAR_NAME"
       info "download version $latest_version success"
     else
       # download or checkSign has already removed the temporary file.
@@ -317,10 +318,20 @@ mkdirFullNode() {
   cd "$FULL_NODE_DIR" || exit 1
 }
 
+# Ends a failed --release / --deploy: removes the temporary files of quickStart, logs $1 and
+# exits.
+abortDeploy() {
+  rm -f config.conf.download "$JAR_NAME.download"
+  warn "$1"
+  exit 1
+}
+
 # --release / --deploy: sets up $FULL_NODE_DIR with the mainnet config and the latest verified
-# release jar. Exits when the version, the config or the jar cannot be fetched or verified,
+# release jar, keeping an existing config.conf that differs from the mainnet config as
+# config.conf_bak. Exits when the version, the config or the jar cannot be fetched or verified,
 # leaving an existing config.conf and $JAR_NAME untouched.
 quickStart() {
+  local unchanged backup=false
   full_node_version=$(getLatestReleaseVersion)
   if [[ -n $full_node_version ]]; then
     # Enter $FULL_NODE_DIR, then download the mainnet config and the signed release jar for
@@ -328,20 +339,30 @@ quickStart() {
     # both are downloaded and the jar is verified. download and checkSign remove a file that
     # fails.
     mkdirFullNode
+    unchanged="deploy aborted, config.conf and $JAR_NAME are unchanged"
     info "check latest version: $full_node_version"
     info 'download config'
     if download "$MAIN_NET_CONFIG_URL" config.conf.download; then
       info "download $full_node_version"
       if downloadRelease "$full_node_version" "$RELEASE_JAR" "$JAR_NAME.download"; then
+        # The backup is made before anything is replaced, and a failed backup replaces nothing.
         # The jar goes first: should the config then fail to move, the new jar is left with the
-        # existing config, as after --upgrade.
-        mv "$JAR_NAME.download" "$JAR_NAME" && mv config.conf.download config.conf || exit 1
+        # existing config, as after --upgrade. mv -f and cp -f do not prompt for a read-only
+        # file, so the result does not depend on whether a terminal is attached.
+        if [[ -f config.conf ]] && ! cmp -s config.conf config.conf.download; then
+          cp -pf config.conf config.conf_bak || abortDeploy "$unchanged"
+          backup=true
+        fi
+        mv -f "$JAR_NAME.download" "$JAR_NAME" || abortDeploy "$unchanged"
+        mv -f config.conf.download config.conf \
+          || abortDeploy "deploy aborted, $JAR_NAME is updated but config.conf is unchanged"
+        if [[ $backup == true ]]; then
+          warn 'config.conf replaced by the mainnet config, the previous one is kept as config.conf_bak'
+        fi
         return 0
       fi
-      rm -f config.conf.download
     fi
-    warn "deploy aborted, config.conf and $JAR_NAME are unchanged"
-    exit 1
+    abortDeploy "$unchanged"
   else
     # Without a release tag there is nothing to download.
     info 'not getting the latest version'
@@ -714,7 +735,7 @@ ensureArchiveJar() {
   # Download to a temporary name first, so an interrupted download never leaves a partial or
   # unverified jar that a later start would run; move it into place only once verified.
   if downloadRelease "$(getLatestReleaseVersion)" "$RELEASE_ARCHIVE_JAR" "$ARCHIVE_JAR.download" \
-      && mv "$ARCHIVE_JAR.download" "$ARCHIVE_JAR"; then
+      && mv -f "$ARCHIVE_JAR.download" "$ARCHIVE_JAR"; then
     info 'download rebuild manifest plugin success'
   else
     warn 'skip rebuild manifest'
@@ -1011,7 +1032,7 @@ fi
 if [[ $DOWNLOAD == true ]]; then
   latest=$(getLatestReleaseVersion)
   if [[ -n $latest ]]; then
-    downloadRelease "$latest" "$RELEASE_JAR" "$JAR_NAME.download" && mv "$JAR_NAME.download" "$JAR_NAME"
+    downloadRelease "$latest" "$RELEASE_JAR" "$JAR_NAME.download" && mv -f "$JAR_NAME.download" "$JAR_NAME"
     exit
   else
     info 'not getting the latest version'
