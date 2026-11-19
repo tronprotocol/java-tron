@@ -43,7 +43,7 @@ public class DynamicArgs {
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();
-        } catch (Exception e) {
+        } catch (Throwable e) {
           logger.error("Exception caught when reloading configuration", e);
         }
       }, 10, checkInterval, TimeUnit.SECONDS);
@@ -53,8 +53,8 @@ public class DynamicArgs {
   public void run() {
     long lastModifiedTime = configFile.lastModified();
     if (lastModifiedTime > lastModified) {
-      reload();
       lastModified = lastModifiedTime;
+      reload();
     }
   }
 
