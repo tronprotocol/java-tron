@@ -1,14 +1,18 @@
 FROM ubuntu:24.04
 ARG VERSION="dev"
+ARG OPENJDK_VERSION="17.0.21.1+2-1~24.04.1"
 ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0"
 
 ENV TMP_DIR="/tron-build"
 ENV BASE_DIR="/java-tron"
+ENV JAVA_HOME="/usr/lib/jvm/java-17-openjdk-arm64"
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Apply Ubuntu updates to packages inherited from the base image before installing build tools.
 RUN apt-get --error-on=any update $NO_PROXY_CACHE \
   && DEBIAN_FRONTEND=noninteractive apt-get --quiet --yes --no-install-recommends --with-new-pkgs upgrade \
-  && apt-get --quiet --yes install git 7zip curl jq libtcmalloc-minimal4 openjdk-17-jre-headless=17* \
+  && apt-get --quiet --yes --no-install-recommends install ca-certificates git libtcmalloc-minimal4 \
+       "openjdk-17-jre-headless=$OPENJDK_VERSION" \
   && echo "git clone" \
   && mkdir -p $TMP_DIR \
   && cd $TMP_DIR \
@@ -17,18 +21,19 @@ RUN apt-get --error-on=any update $NO_PROXY_CACHE \
   && git checkout master \
   && ./gradlew clean build -x test -x check --no-daemon \
   && cd build/distributions \
-  && 7z x -y java-tron-1.0.0.zip  \
-  && cp $TMP_DIR/java-tron/framework/src/main/resources/config.conf java-tron-1.0.0/config.conf \
-  && mv java-tron-1.0.0 $BASE_DIR \
+  && java -m jdk.jartool/sun.tools.jar.Main xf java-tron-1.0.0.zip \
+  && mv java-tron-1.0.0 "$BASE_DIR" \
+  && chmod 755 "$BASE_DIR/bin/FullNode" "$BASE_DIR/bin/FullNode.bat" \
+  && cp ../../framework/src/main/resources/config.conf "$BASE_DIR/config.conf" \
+  && cd / \
   && rm -rf $TMP_DIR \
   && rm -rf ~/.gradle \
+  && apt-get --quiet --yes purge --auto-remove git \
   # Clean apt cache
   && apt-get clean \
   && rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/* \
   && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME="/usr/lib/jvm/java-17-openjdk-arm64"
-ENV PATH=$PATH:$JAVA_HOME/bin
 ENV LD_PRELOAD="/usr/lib/aarch64-linux-gnu/libtcmalloc_minimal.so.4"
 ENV TCMALLOC_RELEASE_RATE=10
 
