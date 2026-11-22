@@ -179,6 +179,36 @@ When the script is used from a java-tron checkout, only the Dockerfile and build
 
 Standalone `--build` using only a downloaded `docker.sh` is currently unavailable. The helper downloads only the architecture-specific Dockerfile from `develop`, but the current `develop` Dockerfiles also require `docker-entrypoint.sh`, which is missing from the temporary build context. Use a complete checkout containing the matching Dockerfiles until those files are synchronized to `develop` and standalone builds are verified for both architectures.
 
+### Update a pinned OpenJDK package
+
+Each Dockerfile pins an exact OpenJDK package version from the Ubuntu 24.04 repositories. When Ubuntu replaces that version in the package index, a fresh build for the affected architecture can fail with `Version ... was not found`. Check the versions available for that architecture.
+
+```shell
+# amd64 requires the same version of both Java 8 packages
+docker run --rm --platform linux/amd64 ubuntu:24.04 sh -ec \
+  'apt-get --error-on=any update -qq && apt-cache madison openjdk-8-jdk-headless openjdk-8-jre-headless'
+
+# arm64 uses the Java 17 runtime
+docker run --rm --platform linux/arm64 ubuntu:24.04 sh -ec \
+  'apt-get --error-on=any update -qq && apt-cache madison openjdk-17-jre-headless'
+```
+
+Choose the full version from the second column, including the Ubuntu revision. For a security update, check the fixed version for Ubuntu 24.04 in the relevant [Ubuntu Security Notice](https://ubuntu.com/security/notices). From the repository root, substitute the chosen version in the build command for the affected architecture.
+
+```shell
+# amd64
+docker build --no-cache --platform linux/amd64 \
+  --build-arg OPENJDK_VERSION='<full Java 8 package version>' \
+  -f docker/Dockerfile -t java-tron:check-amd64 docker
+
+# arm64
+docker build --no-cache --platform linux/arm64 \
+  --build-arg OPENJDK_VERSION='<full Java 17 package version>' \
+  -f docker/arm64/Dockerfile -t java-tron:check-arm64 docker
+```
+
+Verify the runtime with `docker run --rm --platform <platform> --entrypoint java <image> -version` and confirm FullNode starts with your usual configuration. Then update the `ARG OPENJDK_VERSION` default in the corresponding Dockerfile so subsequent builds use the verified version.
+
 ## Options
 
 ### Commands
