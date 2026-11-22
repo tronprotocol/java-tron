@@ -5,8 +5,9 @@ ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true
 ENV TMP_DIR="/tron-build"
 ENV BASE_DIR="/java-tron"
 
-# Update and install dependencies without using any cache
-RUN apt-get update $NO_PROXY_CACHE \
+# Apply Ubuntu updates to packages inherited from the base image before installing build tools.
+RUN apt-get --error-on=any update $NO_PROXY_CACHE \
+  && DEBIAN_FRONTEND=noninteractive apt-get --quiet --yes --no-install-recommends --with-new-pkgs upgrade \
   && apt-get --quiet --yes install git 7zip curl jq libtcmalloc-minimal4 openjdk-17-jre-headless=17* \
   && echo "git clone" \
   && mkdir -p $TMP_DIR \

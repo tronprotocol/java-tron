@@ -8,9 +8,10 @@ ENV ADOPTIUM_SIGNING_FINGERPRINT="3B04D753C9050D9A5D343F39843C48A565F8F04B"
 ENV JDK_DIR="/usr/local/openjdk-8"
 ENV BASE_DIR="/java-tron"
 
-# Update and install dependencies without using any cache
-RUN apt-get update $NO_PROXY_CACHE  && \
-  apt-get --quiet --yes install git 7zip curl jq libtcmalloc-minimal4 gnupg dirmngr ca-certificates && \
+# Apply Ubuntu updates to packages inherited from the base image before installing build tools.
+RUN apt-get --error-on=any update $NO_PROXY_CACHE \
+  && DEBIAN_FRONTEND=noninteractive apt-get --quiet --yes --no-install-recommends --with-new-pkgs upgrade \
+  && apt-get --quiet --yes install git 7zip curl jq libtcmalloc-minimal4 gnupg dirmngr ca-certificates && \
   cd /usr/local \
   && FETCH_URL="$(curl -fsS -w "%{redirect_url}" -o /dev/null "$OPENJDK8_URL")" \
   && JDK_TAR="$(curl -fsSL -w "%{filename_effective}" -O "$FETCH_URL")" \
