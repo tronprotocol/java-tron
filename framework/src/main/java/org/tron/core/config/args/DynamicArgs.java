@@ -43,7 +43,7 @@ public class DynamicArgs {
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();
-        } catch (Exception e) {
+        } catch (Throwable e) {
           logger.error("Exception caught when reloading configuration", e);
         }
       }, 10, checkInterval, TimeUnit.SECONDS);
@@ -53,24 +53,24 @@ public class DynamicArgs {
   public void run() {
     long lastModifiedTime = configFile.lastModified();
     if (lastModifiedTime > lastModified) {
-      reload();
       lastModified = lastModifiedTime;
+      reload();
     }
   }
 
   public void reload() {
     logger.debug("Reloading ... ");
     Config config = Configuration.getByFileName(Args.getConfigFilePath());
-    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
+    List<InetSocketAddress> active = Args.filterInetSocketAddress(
+        config.getStringList("node.active"), true);
+    List<InetSocketAddress> passive = Args.filterInetSocketAddress(
+        config.getStringList("node.passive"), false);
 
-    updateActiveNodes(nodeConfig);
-
-    updateTrustNodes(nodeConfig);
+    updateActiveNodes(active);
+    updateTrustNodes(passive);
   }
 
-  private void updateActiveNodes(NodeConfig nodeConfig) {
-    List<InetSocketAddress> newActiveNodes =
-        Args.filterInetSocketAddress(nodeConfig.getActive(), true);
+  private void updateActiveNodes(List<InetSocketAddress> newActiveNodes) {
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
     activeNodes.removeIf(node -> !newActiveNodes.contains(node));
@@ -83,9 +83,9 @@ public class DynamicArgs {
         TronNetService.getP2pConfig().getActiveNodes().toString());
   }
 
-  private void updateTrustNodes(NodeConfig nodeConfig) {
+  private void updateTrustNodes(List<InetSocketAddress> passiveNodes) {
     List<InetAddress> newPassiveNodes = new java.util.ArrayList<>();
-    for (InetSocketAddress sa : Args.filterInetSocketAddress(nodeConfig.getPassive(), false)) {
+    for (InetSocketAddress sa : passiveNodes) {
       newPassiveNodes.add(sa.getAddress());
     }
     parameter.setPassiveNodes(newPassiveNodes);

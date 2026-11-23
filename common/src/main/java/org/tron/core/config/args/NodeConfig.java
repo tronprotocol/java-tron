@@ -433,8 +433,16 @@ public class NodeConfig {
           + "protection; using the secure default of {}.", RpcConfig.DEFAULT_SECONDS_PER_WINDOW);
       rpc.secondsPerWindow = RpcConfig.DEFAULT_SECONDS_PER_WINDOW;
     }
+    if (rpc.maxConnectionIdleInMillis < 0) {
+      throw new TronError("node.rpc.maxConnectionIdleInMillis must be non-negative, got: "
+          + rpc.maxConnectionIdleInMillis, PARAMETER_INIT);
+    }
     if (rpc.maxConnectionIdleInMillis == 0) {
       rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;
+    }
+    if (rpc.maxConnectionAgeInMillis < 0) {
+      throw new TronError("node.rpc.maxConnectionAgeInMillis must be non-negative, got: "
+          + rpc.maxConnectionAgeInMillis, PARAMETER_INIT);
     }
     if (rpc.maxConnectionAgeInMillis == 0) {
       rpc.maxConnectionAgeInMillis = Long.MAX_VALUE;

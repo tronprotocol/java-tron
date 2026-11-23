@@ -199,6 +199,7 @@ public class NetMetricManager {
     for (LatencyDetailInfo detail : net.getLatency().getDetail()) {
       Protocol.MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo.Builder detailInfo =
           Protocol.MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo.newBuilder();
+      detailInfo.setWitness(detail.getWitness());
       detailInfo.setTop99(detail.getTop99());
       detailInfo.setTop95(detail.getTop95());
       detailInfo.setTop75(detail.getTop75());
