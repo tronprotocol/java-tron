@@ -159,6 +159,14 @@ $ bash docker.sh --build amd64
 $ bash docker.sh --build arm64
 ```
 
+To override the pin for one build, set `OPENJDK_VERSION` to the full Ubuntu package version for the target architecture.
+
+```shell
+OPENJDK_VERSION='<full Java 17 package version>' bash docker.sh --build arm64
+```
+
+A successful build updates the local `tronprotocol/java-tron:latest` tag used by `--run`. To test a candidate version under a separate tag, follow [Update a pinned OpenJDK package](#update-a-pinned-openjdk-package).
+
 Building for an architecture different from the Docker daemon requires a builder with the corresponding emulation support. Docker Desktop provides this by default; standalone Docker Engine installations may require QEMU/binfmt configuration.
 
 Docker may reuse cached layers, so rebuilding does not necessarily fetch the latest remote `master`. To fetch the source again, run one of the following commands from the java-tron repository root. The helper does not accept `--no-cache`; use Docker directly:
@@ -213,7 +221,7 @@ Verify the runtime with `docker run --rm --platform <platform> --entrypoint java
 
 ### Commands
 
-- **`--build [amd64|arm64]`**: build `tronprotocol/java-tron:latest` from the remote `master` branch, optionally for the specified architecture
+- **`--build [amd64|arm64]`**: build `tronprotocol/java-tron:latest` from the remote `master` branch, optionally for the specified architecture. Set `OPENJDK_VERSION` to override the pinned Ubuntu OpenJDK package version for that build.
 - **`--pull`**: download `tronprotocol/java-tron:latest` from Docker Hub
 - **`--run`**: run `tronprotocol/java-tron:latest`
 - **`--start`**: start the existing java-tron container
