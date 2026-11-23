@@ -4,14 +4,22 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
+import com.google.protobuf.ByteString;
+import java.util.Locale;
 import org.junit.Test;
+import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
 
 public class Tip945VmTest extends TvmOptimizationVmTestBase {
@@ -280,6 +288,149 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
       weight += account(address).getFrozenV2BalanceForEnergy() / TRX_PRECISION;
     }
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(weight);
+  }
+
+  @Test
+  public void energyMergeRetainsWindowAfterOptimization() throws Exception {
+    for (long cancelAllV2 : new long[]{0, 1}) {
+      dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(cancelAllV2);
+      dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100_000_000L);
+      install(SOURCE, destroy(CALLER));
+      setEnergyAccount(CALLER, 10_000L * TRX_PRECISION, 50_000L, 10_000L, cancelAllV2 == 1);
+      setEnergyAccount(SOURCE, 10_000L * TRX_PRECISION, 100_000L, 19_400L, cancelAllV2 == 1);
+      ownEnergyWeight(CALLER, SOURCE);
+
+      TransactionTrace trace = executeWithFeeLimit(SOURCE, 5_000_000L);
+      assertSuccess(trace);
+      assertEquals(19_400L, trace.getReceipt().getCallerEnergyMergedWindowSize());
+      assertEquals(19_400L, account(CALLER).getWindowSize(ENERGY));
+      finish(trace);
+
+      assertTrue(account(CALLER).getWindowSize(ENERGY) >= 19_400L);
+    }
+  }
+
+  @Test
+  public void originEnergyMergeRetainsWindowAfterOptimization() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100_000_000L);
+    install(THIRD, "00");
+    install(SOURCE, destroy(THIRD));
+    install(OUTER, outer(SOURCE, false), THIRD, 0L, 50_000L);
+    setEnergyAccount(CALLER, 10_000L * TRX_PRECISION, 0L, 0L, true);
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, 50_000L, 10_000L, true);
+    setEnergyAccount(SOURCE, 10_000L * TRX_PRECISION, 100_000L, 19_400L, true);
+    ownEnergyWeight(CALLER, THIRD, SOURCE);
+
+    TransactionTrace trace = executeWithFeeLimit(OUTER, 5_000_000L);
+    assertSuccess(trace);
+    assertEquals(19_400L, trace.getReceipt().getOriginEnergyMergedWindowSize());
+    assertEquals(19_400L, account(THIRD).getWindowSize(ENERGY));
+    finish(trace);
+
+    assertTrue(account(THIRD).getWindowSize(ENERGY) >= 19_400L);
+  }
+
+  @Test
+  public void undelegatePreservesCallerWindowAfterOptimization() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
+    dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100_000_000L);
+    String undelegateCode = pushAddress(CALLER)
+        + "63" + String.format(Locale.ROOT, "%08x", (int) TRX_PRECISION)
+        + push(1) + "df5000";
+    install(SOURCE, undelegateCode);
+    setEnergyAccount(CALLER, 10_000L * TRX_PRECISION, 10_000L, 10_000L, true);
+    AccountCapsule callerCap = account(CALLER);
+    callerCap.addAcquiredDelegatedFrozenV2BalanceForEnergy(10L * TRX_PRECISION);
+    save(callerCap);
+    AccountCapsule sourceCap = account(SOURCE);
+    sourceCap.addDelegatedFrozenV2BalanceForEnergy(10L * TRX_PRECISION);
+    save(sourceCap);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(SOURCE, CALLER, false);
+    DelegatedResourceCapsule delegated = new DelegatedResourceCapsule(
+        ByteString.copyFrom(SOURCE), ByteString.copyFrom(CALLER));
+    delegated.addFrozenBalanceForEnergy(10L * TRX_PRECISION, 0L);
+    dbManager.getDelegatedResourceStore().put(key, delegated);
+    ownEnergyWeight(CALLER, SOURCE);
+
+    TransactionTrace trace = executeWithFeeLimit(SOURCE, 5_000_000L);
+    assertSuccess(trace);
+    long mergedSize = trace.getReceipt().getCallerEnergyMergedWindowSize();
+    assertTrue(mergedSize > 20_000L);
+    assertTrue(account(CALLER).getEnergyUsage() < trace.getReceipt().getCallerEnergyMergedUsage());
+    assertEquals(mergedSize, account(CALLER).getWindowSize(ENERGY));
+    finish(trace);
+
+    assertTrue(trace.getReceipt().getEnergyUsage() > 0);
+    assertTrue(account(CALLER).getWindowSize(ENERGY) < 20_000L);
+  }
+
+  @Test
+  public void resetAccountUsageValidatesEnergyLimitAfterOptimization() throws Exception {
+    long totalLimit = 100_000_000L;
+    long cap = totalLimit * 2;
+    long overLimitUsage = 250_000_000L;
+    long withinCapUsage = 150_000_000L;
+    install(SOURCE, "60015000");
+
+    for (long cancelAllV2 : new long[]{0, 1}) {
+      for (long enabled : new long[]{0, 1}) {
+        VMConfig.initAllowTvmResourceOptimization(enabled);
+        dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(enabled);
+        dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(cancelAllV2);
+        dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+        dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalLimit);
+
+        for (long initialUsage : new long[]{overLimitUsage, cap, withinCapUsage}) {
+          setEnergyAccount(CALLER, 10_000L * TRX_PRECISION, initialUsage, 20_000L,
+              cancelAllV2 == 1);
+          ownEnergyWeight(CALLER);
+
+          TransactionTrace trace = executeWithFeeLimit(SOURCE, 1_000_000L);
+          assertSuccess(trace);
+          if (enabled == 1 && initialUsage > cap) {
+            assertThrows(ArithmeticException.class, () -> finish(trace));
+          } else {
+            finish(trace);
+            assertEquals(initialUsage, account(CALLER).getEnergyUsage());
+            assertEquals(20_000L, account(CALLER).getWindowSize(ENERGY));
+          }
+        }
+      }
+    }
+  }
+
+  private void setEnergyAccount(byte[] address, long frozenEnergy, long usage, long windowSlots,
+      boolean windowV2) {
+    AccountCapsule cap = account(address);
+    cap.clearFrozenV2();
+    cap.addFrozenBalanceForEnergyV2(frozenEnergy);
+    cap.setEnergyUsage(usage);
+    cap.setLatestConsumeTimeForEnergy(
+        EnergyProcessor.getHeadSlot(dbManager.getDynamicPropertiesStore()));
+    if (windowV2) {
+      cap.setNewWindowSizeV2(ENERGY, windowSlots * 1_000L);
+    } else {
+      cap.setNewWindowSize(ENERGY, windowSlots);
+      cap.setWindowOptimized(ENERGY, false);
+    }
+    save(cap);
+  }
+
+  private TransactionTrace executeWithFeeLimit(byte[] contract, long feeLimit) throws Exception {
+    TransactionCapsule tx = new TransactionCapsule(
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            CALLER, contract, new byte[0], 0, feeLimit));
+    TransactionTrace trace =
+        new TransactionTrace(tx, StoreFactory.getInstance(), new RuntimeImpl());
+    tx.setTrxTrace(trace);
+    trace.init(null);
+    trace.exec();
+    return trace;
   }
 
   private void assertZeroEnergy(TransactionTrace trace) {
