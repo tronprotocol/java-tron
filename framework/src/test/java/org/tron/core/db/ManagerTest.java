@@ -2159,6 +2159,101 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
+  public void switchForkShouldRejectAncestorBelowSolidifiedBlock() throws Exception {
+    checkForkSolidifiedBoundary(1, false);
+  }
+
+  @Test
+  public void switchForkShouldRemoveProcessedBranchBelowSolidifiedBlock() throws Exception {
+    checkForkSolidifiedBoundary(1, true);
+  }
+
+  @Test
+  public void switchForkShouldAllowAncestorAtSolidifiedBlock() throws Exception {
+    checkForkSolidifiedBoundary(0, false);
+  }
+
+  @Test
+  public void switchForkShouldAllowAncestorAboveSolidifiedBlock() throws Exception {
+    checkForkSolidifiedBoundary(-1, false);
+  }
+
+  private void checkForkSolidifiedBoundary(int solidifiedOffset, boolean processedFork)
+      throws Exception {
+    dbManager.stopRePushThread();
+    byte[] witnessKey = ByteArray.fromHexString(privateKey);
+    ByteString witness = ByteString.copyFrom(ECKey.fromPrivate(witnessKey).getAddress());
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(witness);
+    long time = 1533529947843L;
+    dbManager.pushBlock(new BlockCapsule(
+        blockGenerate.getSignedBlock(witness, time, witnessKey)));
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(witness, privateKey);
+
+    long base = chainManager.getHeadBlockNum();
+    BlockCapsule parent = createTestBlockCapsule(time + 3000, base + 1,
+        chainManager.getHeadBlockId().getByteString(), keys);
+    dbManager.pushBlock(parent);
+    BlockCapsule forkBlock = createTestBlockCapsule(time + 6001, base + 2,
+        parent.getBlockId().getByteString(), keys);
+    BlockCapsule forkHead = createTestBlockCapsule(time + 9001, base + 3,
+        forkBlock.getBlockId().getByteString(), keys);
+    BlockCapsule newHead = createTestBlockCapsule(time + 12000, base + 4,
+        forkHead.getBlockId().getByteString(), keys);
+    BlockCapsule oldBlock = createTestBlockCapsule(time + 6000, base + 2,
+        parent.getBlockId().getByteString(), keys);
+    dbManager.pushBlock(oldBlock);
+    BlockCapsule oldHead = createTestBlockCapsule(time + 9000, base + 3,
+        oldBlock.getBlockId().getByteString(), keys);
+    dbManager.pushBlock(oldHead);
+
+    dbManager.pushBlock(forkBlock);
+    dbManager.pushBlock(forkHead);
+    long solidified = parent.getNum() + solidifiedOffset;
+    chainManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(solidified);
+    KhaosDatabase khaos = chainManager.getKhaosDb();
+    if (processedFork) {
+      // Model a cached prefix retained from a previously executed branch.
+      khaos.getMiniStore().getByHash(forkBlock.getBlockId()).commit(forkBlock);
+    }
+    // The ancestor can still be cached after the solidified height advances past it.
+    Assert.assertNotNull(khaos.getMiniStore().getByHash(parent.getBlockId()));
+
+    if (solidifiedOffset > 0) {
+      int snapshots = dbManager.getRevokingStore().size();
+      assertThrows(BadBlockException.class, () -> dbManager.pushBlock(newHead));
+
+      Assert.assertEquals(oldHead.getBlockId(), chainManager.getHeadBlockId());
+      Assert.assertEquals(solidified,
+          chainManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      Assert.assertEquals(snapshots, dbManager.getRevokingStore().size());
+      Assert.assertEquals(oldHead.getBlockId(), khaos.getHeadId());
+      for (BlockCapsule block : Arrays.asList(parent, oldBlock, oldHead)) {
+        Assert.assertTrue(chainManager.getBlockStore().has(block.getBlockId().getBytes()));
+        Assert.assertEquals(block.getBlockId(), chainManager.getBlockIdByNum(block.getNum()));
+        Assert.assertNotNull(khaos.getMiniStore().getByHash(block.getBlockId()));
+      }
+      for (BlockCapsule block : Arrays.asList(forkBlock, forkHead, newHead)) {
+        Assert.assertNull(khaos.getMiniStore().getByHash(block.getBlockId()));
+      }
+
+      BlockCapsule honestNext = createTestBlockCapsule(time + 12000, base + 4,
+          oldHead.getBlockId().getByteString(), keys);
+      dbManager.pushBlock(honestNext);
+      Assert.assertEquals(honestNext.getBlockId(), chainManager.getHeadBlockId());
+      Assert.assertEquals(honestNext.getBlockId(), khaos.getHeadId());
+    } else {
+      dbManager.pushBlock(newHead);
+      Assert.assertEquals(newHead.getBlockId(), chainManager.getHeadBlockId());
+      Assert.assertEquals(newHead.getBlockId(), khaos.getHeadId());
+      Assert.assertEquals(forkBlock.getBlockId(),
+          chainManager.getBlockIdByNum(forkBlock.getNum()));
+      Assert.assertEquals(forkHead.getBlockId(), chainManager.getBlockIdByNum(forkHead.getNum()));
+    }
+  }
+
+  @Test
   public void switchForkShouldRestoreOldBranchAfterRuntimeException() throws Exception {
     checkForkRecovery(false, false);
   }
