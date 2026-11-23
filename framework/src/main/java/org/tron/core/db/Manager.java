@@ -1156,6 +1156,16 @@ public class Manager {
     }
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
+      long ancestorNum = binaryTree.getValue().peekLast().getNum() - 1;
+      long solidifiedNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      if (ancestorNum < solidifiedNum) {
+        Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
+        MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
+        binaryTree.getKey().forEach(block -> khaosDb.removeBlk(block.getId()));
+        khaosDb.setHead(binaryTree.getValue().peekFirst());
+        throw new BadBlockException(String.format(
+            "Fork common ancestor %d is below solidified block %d", ancestorNum, solidifiedNum));
+      }
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
