@@ -13,6 +13,8 @@ public class Constant {
   public static final int NODE_TYPE_LIGHT_NODE = 1;
 
   // Transaction
+  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
+  public static final int MIN_TRANSACTION_SIZE = 80;
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final int CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE = 500;
   public static final int CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE = 10000;
