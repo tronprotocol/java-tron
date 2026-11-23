@@ -220,6 +220,8 @@ public class ManagerWitnessSignatureTest extends BaseMethodTest {
     BlockCapsule parent = nextBlock(signer);
     dbManager.pushBlock(parent);
     BlockCapsule oldHead = blockRevokingWitness(parent);
+    // Keep the head reversible in this single-witness fixture.
+    chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(parent.getNum());
     BlockCapsule fork = signedBlock(parent.getNum() + 1, parent.getBlockId(),
         parent.getTimeStamp() + 3001, replacement);
     dbManager.pushBlock(fork);
@@ -321,6 +323,8 @@ public class ManagerWitnessSignatureTest extends BaseMethodTest {
     BlockCapsule parent = nextBlock(signer);
     dbManager.pushBlock(parent);
     dbManager.pushBlock(nextBlock(signer));
+    // Keep the head reversible in this single-witness fixture.
+    chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(parent.getNum());
     BlockCapsule fork = signedBlock(parent.getNum() + 1, parent.getBlockId(),
         parent.getTimeStamp() + 3001, signer);
     BlockCapsule forkHead = signedBlock(fork.getNum() + 1, fork.getBlockId(),
