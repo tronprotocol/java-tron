@@ -99,20 +99,49 @@ public class DynamicArgsReloadTest {
   }
 
   @Test
-  public void retriesAfterInvalidApiSettings() throws Exception {
-    assertRecoversAfterInvalidConfig(
+  public void reloadsPeersDespiteInvalidApiSettings() throws Exception {
+    String[] invalidSettings = {
         "node.rpc.maxConcurrentCallsPerConnection = -1",
+        "node.rpc.maxConnectionIdleInMillis = -1",
+        "node.rpc.maxConnectionAgeInMillis = -1",
         "node.rpc.maxRstStream = -1",
         "node.rpc.maxRstStream = 2147483647",
         "node.rpc.secondsPerWindow = -1",
         "node.rpc.maxMessageSize = -1",
         "node.http.maxMessageSize = -1",
-        "node.jsonrpc.maxMessageSize = -1");
+        "node.jsonrpc.maxMessageSize = -1",
+        "node.rpc.maxMessageSize = []"
+    };
+    long editedTimestamp = initialTimestamp;
+    try (MockedStatic<TronNetService> netService = mockStatic(TronNetService.class)) {
+      netService.when(TronNetService::getP2pConfig).thenReturn(p2pConfig);
+      for (int i = 0; i < invalidSettings.length; i++) {
+        String activeIp = "192.0.2." + (3 + 2 * i);
+        String passiveIp = "192.0.2." + (4 + 2 * i);
+        editedTimestamp = writeConfig(invalidSettings[i], activeIp, passiveIp,
+            editedTimestamp + 2000);
+        reloadTask.run();
+        assertEquals(invalidSettings[i], editedTimestamp, lastModified());
+        assertNodes(activeIp, passiveIp);
+      }
+    }
+  }
+
+  @Test
+  public void retriesAfterMalformedPeers() throws Exception {
+    assertRecoversAfterInvalidConfig(
+        "node.active = [\"192.0.2.3:not-a-port\"]",
+        "node.passive = [\"192.0.2.4:not-a-port\"]");
   }
 
   @Test
   public void retriesAfterWrongConfigType() throws Exception {
-    assertRecoversAfterInvalidConfig("node.rpc.maxMessageSize = []");
+    assertRecoversAfterInvalidConfig("node.active = 123", "node.passive = 123");
+  }
+
+  @Test
+  public void retriesAfterMalformedConfig() throws Exception {
+    assertRecoversAfterInvalidConfig("node.passive = [");
   }
 
   @Test
@@ -130,12 +159,16 @@ public class DynamicArgsReloadTest {
     long editedTimestamp = writeConfig("", "192.0.2.3", "192.0.2.4", initialTimestamp + 2000);
     try (MockedStatic<TronNetService> netService = mockStatic(TronNetService.class)) {
       netService.when(TronNetService::getP2pConfig).thenReturn(p2pConfig);
-      try (MockedStatic<NodeConfig> nodeConfig = mockStatic(NodeConfig.class)) {
-        nodeConfig.when(() -> NodeConfig.fromConfig(any())).thenThrow(failure);
+      try (MockedStatic<Configuration> configuration = mockStatic(Configuration.class)) {
+        configuration.when(() -> Configuration.getByFileName(configFile.toString()))
+            .thenThrow(failure);
         reloadTask.run();
+        assertEquals(editedTimestamp, lastModified());
+        assertNodes("192.0.2.1", "192.0.2.2");
+
+        reloadTask.run();
+        configuration.verify(() -> Configuration.getByFileName(configFile.toString()), times(1));
       }
-      assertEquals(editedTimestamp, lastModified());
-      assertNodes("192.0.2.1", "192.0.2.2");
 
       long newerTimestamp = writeConfig("", "192.0.2.5", "192.0.2.6", editedTimestamp + 2000);
       reloadTask.run();
