@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import static org.tron.core.net.PeerSyncTestSupport.blockId;
 import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
+import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
@@ -27,22 +28,30 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.PeerSyncTestSupport;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
+import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.keepalive.KeepAliveService;
+import org.tron.core.net.service.statistics.MessageCount;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -148,6 +157,54 @@ public class PeerStatusCheckMockTest {
     Assert.assertEquals(1, peer.getLastInteractiveTime());
     check.statusCheck();
     verify(peer).disconnect(ReasonCode.TIME_OUT);
+  }
+
+  @Test
+  public void testEmptyFetchDisconnectsWithoutRefreshingActivity() {
+    Inventory[] inventories = {
+        Inventory.newBuilder().setType(InventoryType.BLOCK).build(),
+        Inventory.newBuilder().setType(InventoryType.TRX).build(),
+        Inventory.getDefaultInstance()
+    };
+    for (Inventory inventory : inventories) {
+      peer = PeerSyncTestSupport.peer(11002);
+      peer.setLastInteractiveTime(1);
+      AdvService advService = mock(AdvService.class);
+      when(advService.getTrxCount()).thenReturn(new MessageCount());
+      FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+      ReflectUtils.setFieldValue(handler, "advService", advService);
+      ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+      P2pEventHandlerImpl events = new P2pEventHandlerImpl();
+      ReflectUtils.setFieldValue(events, "fetchInvDataMsgHandler", handler);
+
+      dispatch(events, new FetchInvDataMessage(inventory));
+
+      Assert.assertEquals(1, peer.getLastInteractiveTime());
+      verify(peer).disconnect(ReasonCode.BAD_PROTOCOL);
+      verify(peer, never()).sendMessage(any());
+    }
+  }
+
+  @Test
+  public void testValidBlockFetchStillRefreshesActivity() throws Exception {
+    BlockMessage block = new BlockMessage(new BlockCapsule(
+        1, Sha256Hash.ZERO_HASH, 1, ByteString.EMPTY));
+    BlockId id = block.getBlockCapsule().getBlockId();
+    Item item = new Item(id, InventoryType.BLOCK);
+    peer.getAdvInvSpread().put(item, 1L);
+    when(delegate.getData(id, InventoryType.BLOCK)).thenReturn(block);
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    ReflectUtils.setFieldValue(handler, "advService", mock(AdvService.class));
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    P2pEventHandlerImpl events = new P2pEventHandlerImpl();
+    ReflectUtils.setFieldValue(events, "fetchInvDataMsgHandler", handler);
+
+    dispatch(events, new FetchInvDataMessage(Collections.singletonList(id), InventoryType.BLOCK));
+
+    Assert.assertTrue(peer.getLastInteractiveTime() > 1);
+    Assert.assertNull(peer.getAdvInvSpread().getIfPresent(item));
+    verify(peer).sendMessage(any(BlockMessage.class));
+    verify(peer, never()).disconnect(any());
   }
 
   @Test

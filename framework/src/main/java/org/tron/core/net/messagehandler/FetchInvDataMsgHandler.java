@@ -158,6 +158,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg,
                      boolean isAdv) throws P2pException {
     List<Sha256Hash> hashList = fetchInvDataMsg.getHashList();
+    if (hashList.isEmpty()) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "FetchInvData ids is empty");
+    }
     if (hashList.size() != new HashSet<>(hashList).size()) {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
           "FetchInvData contains duplicate hashes, size: " + hashList.size());
