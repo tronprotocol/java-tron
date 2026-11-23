@@ -99,20 +99,15 @@ public class DynamicArgsReloadTest {
   }
 
   @Test
-  public void retriesAfterInvalidApiSettings() throws Exception {
+  public void reloadsNewerFileAfterInvalidPeerAddresses() throws Exception {
     assertRecoversAfterInvalidConfig(
-        "node.rpc.maxConcurrentCallsPerConnection = -1",
-        "node.rpc.maxRstStream = -1",
-        "node.rpc.maxRstStream = 2147483647",
-        "node.rpc.secondsPerWindow = -1",
-        "node.rpc.maxMessageSize = -1",
-        "node.http.maxMessageSize = -1",
-        "node.jsonrpc.maxMessageSize = -1");
+        "node.active = [\"192.0.2.3:not-a-port\"]",
+        "node.passive = [\"192.0.2.4:not-a-port\"]");
   }
 
   @Test
-  public void retriesAfterWrongConfigType() throws Exception {
-    assertRecoversAfterInvalidConfig("node.rpc.maxMessageSize = []");
+  public void reloadsNewerFileAfterWrongPeerConfigType() throws Exception {
+    assertRecoversAfterInvalidConfig("node.active = true", "node.passive = true");
   }
 
   @Test
@@ -130,9 +125,11 @@ public class DynamicArgsReloadTest {
     long editedTimestamp = writeConfig("", "192.0.2.3", "192.0.2.4", initialTimestamp + 2000);
     try (MockedStatic<TronNetService> netService = mockStatic(TronNetService.class)) {
       netService.when(TronNetService::getP2pConfig).thenReturn(p2pConfig);
-      try (MockedStatic<NodeConfig> nodeConfig = mockStatic(NodeConfig.class)) {
-        nodeConfig.when(() -> NodeConfig.fromConfig(any())).thenThrow(failure);
+      try (MockedStatic<Configuration> configuration = mockStatic(Configuration.class)) {
+        configuration.when(() -> Configuration.getByFileName(configFile.toString()))
+            .thenThrow(failure);
         reloadTask.run();
+        configuration.verify(() -> Configuration.getByFileName(configFile.toString()));
       }
       assertEquals(editedTimestamp, lastModified());
       assertNodes("192.0.2.1", "192.0.2.2");

@@ -7,7 +7,6 @@ import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
-import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
@@ -56,8 +55,6 @@ public class TronMessageFactory {
         return new PingMessage(packed);
       case P2P_PONG:
         return new PongMessage(packed);
-      case TRX:
-        return new TransactionMessage(packed);
       case BLOCK:
         return new BlockMessage(packed);
       case TRXS:
