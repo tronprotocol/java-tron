@@ -1261,6 +1261,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
       txBuilder.setRawData(rawBuilder);
       tx = setTransactionPermissionId(args.getPermissionId(), txBuilder.build());
+      tx = setTransactionExtraData(args.getExtraData(), tx, args.isVisible());
 
       TransactionJson transactionJson = new TransactionJson();
       transactionJson.setTransaction(
@@ -1314,6 +1315,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
       trx = setTransactionPermissionId(args.getPermissionId(), trx);
+      trx = setTransactionExtraData(args.getExtraData(), trx, args.isVisible());
       trxExtBuilder.setTransaction(trx);
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidParamsException(e.getMessage());
