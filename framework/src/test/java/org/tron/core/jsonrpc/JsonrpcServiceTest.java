@@ -1048,6 +1048,47 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testBuildTrxTransferRejectsInvalidHexMemoOverWire() throws Exception {
+    JsonObject args = newTransferBuildArguments();
+    args.addProperty("extraData", "zz");
+    JSONObject response = handleJsonRpc(newJsonRpcServer(), "buildTransaction", jsonParams(args));
+    assertMappedError(response, -32602, "invalid hex string for \"extraData\"");
+  }
+
+  @Test
+  public void testBuildTrc10TransferRejectsInvalidHexMemoOverWire() throws Exception {
+    JsonObject args = newTransferBuildArguments();
+    args.remove("value");
+    args.addProperty("tokenId", 1000016);
+    args.addProperty("tokenValue", 20);
+    args.addProperty("visible", false);
+    args.addProperty("extraData", "zz");
+    JSONObject response = handleJsonRpc(newJsonRpcServer(), "buildTransaction", jsonParams(args));
+    assertMappedError(response, -32602, "invalid hex string for \"extraData\"");
+  }
+
+  @Test
+  public void testBuildDeploymentRejectsInvalidHexMemoOverWire() throws Exception {
+    JsonObject args = newCreateBuildArguments();
+    args.addProperty("extraData", "zz");
+    JSONObject response = handleJsonRpc(newJsonRpcServer(), "buildTransaction", jsonParams(args));
+    assertMappedError(response, -32602, "invalid hex string for \"extraData\"");
+  }
+
+  @Test
+  public void testBuildDeploymentPreservesVisibleTextMemoOverWire() throws Exception {
+    JsonObject args = newCreateBuildArguments();
+    args.addProperty("extraData", "zz");
+    args.addProperty("visible", true);
+    JSONObject response = handleJsonRpc(newJsonRpcServer(), "buildTransaction", jsonParams(args));
+    assertSuccessfulResponse(response);
+    JSONObject tx = response.getJSONObject("result").getJSONObject("transaction");
+    Transaction.raw raw = Transaction.raw.parseFrom(ByteArray.fromHexString(
+        tx.getString("raw_data_hex")));
+    Assert.assertEquals(ByteString.copyFromUtf8("zz"), raw.getData());
+  }
+
+  @Test
   public void testOptionalDtoNullFieldsOverWire() throws Exception {
     JsonRpcServer server = newJsonRpcServer();
 

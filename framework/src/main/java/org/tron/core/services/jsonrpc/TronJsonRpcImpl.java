@@ -15,6 +15,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.hashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseTxIndex;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.requireValidHex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -85,6 +86,7 @@ import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.servlets.JsonFormat;
 import org.tron.core.services.http.servlets.Util;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil.HexMode;
 import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilter;
@@ -1429,6 +1431,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       fromAddressData = addressCompatibleToByteArray(args.getFrom());
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidRequestException(JSON_ERROR);
+    }
+
+    if (!args.isVisible() && StringUtils.isNotEmpty(args.getExtraData())) {
+      requireValidHex("extraData", args.getExtraData(), HexMode.LENIENT);
     }
 
     // check possible ContractType
