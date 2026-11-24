@@ -64,13 +64,38 @@ public class BuildTransactionExtraDataTest {
 
   @Test
   public void triggerPreservesMemoAndCallData() throws Exception {
+    setUpContractCall();
+    TriggerSmartContract call = buildWithMemo().getParameter().unpack(TriggerSmartContract.class);
+    assertEquals("60fe47b1", ByteArray.toHexString(call.getData().toByteArray()));
+  }
+
+  @Test
+  public void deployEncodesVisibleMemoAsUtf8() throws Exception {
+    args.setData("0x6000");
+    assertVisibleMemoBytes();
+  }
+
+  @Test
+  public void triggerEncodesVisibleMemoAsUtf8() throws Exception {
+    setUpContractCall();
+    assertVisibleMemoBytes();
+  }
+
+  private void setUpContractCall() throws Exception {
     args.setTo("0x548794500882809695a8a687866e76d4271a1abc");
     args.setData("0x60fe47b1");
     when(wallet.getContract(any())).thenReturn(SmartContract.getDefaultInstance());
     when(wallet.triggerContract(any(), any(), any(), any())).thenAnswer(invocation ->
         invocation.getArgument(1, TransactionCapsule.class).getInstance());
-    TriggerSmartContract call = buildWithMemo().getParameter().unpack(TriggerSmartContract.class);
-    assertEquals("60fe47b1", ByteArray.toHexString(call.getData().toByteArray()));
+  }
+
+  private void assertVisibleMemoBytes() throws Exception {
+    args.setVisible(true);
+    args.setExtraData(new String(new char[] {0x8ba2, 0x5355}));
+    JSONObject tx = jsonRpc.buildTransaction(args).getTransaction();
+    Transaction.raw raw = Transaction.raw.parseFrom(ByteArray.fromHexString(
+        tx.getString("raw_data_hex")));
+    assertEquals("e8aea2e58d95", ByteArray.toHexString(raw.getData().toByteArray()));
   }
 
   private Transaction.Contract buildWithMemo() throws Exception {

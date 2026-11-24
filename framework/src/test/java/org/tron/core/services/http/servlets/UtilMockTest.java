@@ -294,10 +294,12 @@ public class UtilMockTest  {
   @Test
   public void testSetTransactionExtraData() {
     TransactionCapsule transactionCapsule = getTransactionCapsuleExample();
-    JSONObject jsonObject = JSONObject.parseObject("{\"extra_data\":\"test\"}");
+    String memo = new String(new char[] {0x8ba2, 0x5355});
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("extra_data", memo);
     Protocol.Transaction out = Util.setTransactionExtraData(jsonObject,
         transactionCapsule.getInstance(), true);
-    Assert.assertNotNull(out);
+    Assert.assertEquals(ByteString.copyFromUtf8(memo), out.getRawData().getData());
   }
 
   @Test

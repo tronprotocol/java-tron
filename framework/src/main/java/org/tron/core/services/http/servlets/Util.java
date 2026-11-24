@@ -525,7 +525,7 @@ public class Util {
     if (data.length() > 0) {
       Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
       if (visible) {
-        raw.setData(ByteString.copyFrom(data.getBytes()));
+        raw.setData(ByteString.copyFromUtf8(data));
       } else {
         raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
       }
