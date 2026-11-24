@@ -144,21 +144,20 @@ public class AwsClientRecordsTest {
   }
 
   @Test
-  public void malformedBase64InANodesEntryAbortsTheWholeCollection() throws Exception {
+  public void malformedBase64InANodesEntryDoesNotPreventCollectingValidRecords() throws Exception {
+    DnsNode node = new DnsNode(null, "192.0.2.1", null, 10000);
+    String valid = Entry.nodesPrefix + DnsNode.compress(Collections.singletonList(node));
     when(sdk.listResourceRecordSets(any(ListResourceRecordSetsRequest.class))).thenReturn(
-        page(false, txt("a." + DOMAIN + ".", 600, quoted(Entry.nodesPrefix + "!!!not-base64!!!"))));
+        page(false,
+            txt("a." + DOMAIN + ".", 600, quoted(Entry.nodesPrefix + "!!!not-base64!!!")),
+            txt("b." + DOMAIN + ".", 600, quoted(valid))));
 
-    // The catch around parseEntry only handles DnsException, but
-    // Algorithm.decode64 raises an unchecked IllegalArgumentException, so a
-    // single corrupt TXT record takes down the entire publish rather than being
-    // skipped. Reported in the PR description as a deferred upstream defect and
-    // pinned here so a fix is visible as a test change.
-    try {
-      client.collectRecords(DOMAIN);
-      Assert.fail("expected the unchecked decoder failure to escape");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertTrue(expected.getMessage().contains("base64"));
-    }
+    Map<String, RecordSet> existing = client.collectRecords(DOMAIN);
+
+    Assert.assertTrue(existing.containsKey("b." + DOMAIN));
+    Field field = AwsClient.class.getDeclaredField("serverNodes");
+    field.setAccessible(true);
+    Assert.assertEquals(Collections.singleton(node), field.get(client));
   }
 
   @Test

@@ -11,11 +11,22 @@ import org.junit.Test;
 import org.tron.p2p.dns.tree.Algorithm;
 import org.tron.p2p.dns.tree.Entry;
 import org.tron.p2p.dns.tree.NodesEntry;
+import org.tron.p2p.exception.DnsException;
 import org.tron.p2p.protos.Discover.EndPoints;
 import org.tron.p2p.protos.Discover.Endpoint;
 import org.tron.p2p.utils.NetUtil;
 
 public class DnsNodeTest {
+
+  @Test
+  public void invalidBase64InNodesEntryIsReportedAsDnsException() {
+    for (String content : new String[]{"!", "A", "AA="}) {
+      DnsException error = Assert.assertThrows(DnsException.class,
+          () -> NodesEntry.parseEntry(Entry.nodesPrefix + content));
+      Assert.assertEquals(DnsException.TypeEnum.INVALID_NODES, error.getType());
+      Assert.assertTrue(error.getCause() instanceof IllegalArgumentException);
+    }
+  }
 
   @Test
   public void invalidIpv4IsNeverPassedToAddressParsing() throws Exception {

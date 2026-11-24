@@ -8,6 +8,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.p2p.dns.TreeTest;
+import org.tron.p2p.dns.tree.Tree;
 import org.tron.p2p.dns.update.AwsClient.RecordSet;
 import software.amazon.awssdk.services.route53.model.Change;
 import software.amazon.awssdk.services.route53.model.ChangeAction;
@@ -71,12 +73,14 @@ public class AwsClientChangeTest {
   }
 
   @Test
-  public void leavesUnchangedRecordsAlone() {
+  public void leavesUnchangedRecordsAlone() throws Exception {
     Map<String, RecordSet> existing = new HashMap<>();
+    String root = TreeTest.signedTree(new Tree(), "192.0.2.1").getRootEntry().toFormat();
     // stored values are quoted, which is what splitTxt produces
-    existing.put(DOMAIN, new RecordSet(new String[] {"\"root-value\""}, ROOT_TTL));
+    existing.put(DOMAIN, new RecordSet(new String[] {(String) splitTxt.invoke(client, root)},
+        ROOT_TTL));
 
-    List<Change> changes = client.computeChanges(DOMAIN, records(DOMAIN, "root-value"), existing);
+    List<Change> changes = client.computeChanges(DOMAIN, records(DOMAIN, root), existing);
     Assert.assertTrue("identical value and ttl must produce no change", changes.isEmpty());
   }
 

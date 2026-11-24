@@ -46,6 +46,8 @@ public class DnsSignerPublicationTest {
   private final List<String> writes = new ArrayList<>();
   private Publish<?> client;
   private boolean failRootWrite;
+  private String unrelatedRootTxt;
+  private boolean unrelatedRootFirst;
 
   @Parameterized.Parameter
   public String provider;
@@ -58,6 +60,33 @@ public class DnsSignerPublicationTest {
   @Before
   public void setUp() throws Exception {
     client = provider.equals("Aliyun") ? aliClient() : awsClient();
+  }
+
+  @Test
+  public void publicationPreservesUnrelatedTxtAtRoot() throws Exception {
+    unrelatedRootTxt = "site-verification=abc";
+    for (boolean rootPresent : new boolean[]{false, true}) {
+      for (boolean unrelatedFirst : new boolean[]{false, true}) {
+        unrelatedRootFirst = unrelatedFirst;
+        client = provider.equals("Aliyun") ? aliClient() : awsClient();
+        load(tree(OLD_KEY, 1));
+        if (!rootPresent) {
+          records.remove("@");
+        }
+        Tree updated = tree(NEW_KEY, 1);
+
+        client.deploy(DOMAIN, updated);
+
+        Assert.assertEquals(Collections.singletonList("@"), writes);
+        Assert.assertEquals(rootPresent ? 8 : 1, root().getSeq());
+        Assert.assertEquals(updated.getRootEntry().toFormat(), records.get("@"));
+        assertSigner(NEW_KEY, true);
+
+        writes.clear();
+        client.deploy(DOMAIN, tree(NEW_KEY, 1));
+        Assert.assertTrue(writes.isEmpty());
+      }
+    }
   }
 
   @Test
@@ -296,12 +325,14 @@ public class DnsSignerPublicationTest {
 
       @Override
       public boolean updateRecord(String id, String name, String value, long ttl) {
+        Assert.assertNotEquals("unrelated-root", id);
         write(name, value);
         return true;
       }
 
       @Override
       public boolean deleteRecord(String id) {
+        Assert.assertNotEquals("unrelated-root", id);
         writes.add(id);
         records.remove(id);
         return true;
@@ -318,6 +349,12 @@ public class DnsSignerPublicationTest {
             new DescribeDomainRecordsResponseBodyDomainRecordsRecord().setRR(name)
                 .setRecordId(name).setValue(value)
                 .setTTL(name.equals("@") ? (long) Publish.rootTTL : 24L * 60 * 60)));
+        if (unrelatedRootTxt != null) {
+          responseRecords.add(unrelatedRootFirst ? 0 : responseRecords.size(),
+              new DescribeDomainRecordsResponseBodyDomainRecordsRecord().setRR("@")
+                  .setRecordId("unrelated-root").setValue(unrelatedRootTxt)
+                  .setTTL((long) Publish.rootTTL));
+        }
         return new DescribeDomainRecordsResponse().setStatusCode(200)
             .setBody(new DescribeDomainRecordsResponseBody()
                 .setTotalCount((long) responseRecords.size())
@@ -341,8 +378,13 @@ public class DnsSignerPublicationTest {
             writes.add(name);
             records.remove(name);
           } else {
+            List<ResourceRecord> values = new ArrayList<>(record.resourceRecords());
+            if (name.equals("@") && unrelatedRootTxt != null) {
+              Assert.assertTrue("Root update must preserve unrelated TXT",
+                  values.removeIf(part -> part.value().equals("\"" + unrelatedRootTxt + "\"")));
+            }
             StringBuilder value = new StringBuilder();
-            record.resourceRecords().forEach(part ->
+            values.forEach(part ->
                 value.append(part.value().replace("\"", "")));
             write(name, value.toString());
           }
@@ -364,6 +406,17 @@ public class DnsSignerPublicationTest {
               .ttl(name.equals("@") ? (long) Publish.rootTTL : Publish.treeNodeTTL)
               .resourceRecords(ResourceRecord.builder().value("\"" + value + "\"").build())
               .build()));
+          if (unrelatedRootTxt != null) {
+            ResourceRecordSet root = responseRecords.stream()
+                .filter(record -> record.name().equals(DOMAIN)).findFirst()
+                .orElse(ResourceRecordSet.builder().name(DOMAIN).type(RRType.TXT)
+                    .ttl((long) Publish.rootTTL).build());
+            List<ResourceRecord> values = new ArrayList<>(root.resourceRecords());
+            values.add(unrelatedRootFirst ? 0 : values.size(),
+                ResourceRecord.builder().value("\"" + unrelatedRootTxt + "\"").build());
+            responseRecords.remove(root);
+            responseRecords.add(root.toBuilder().resourceRecords(values).build());
+          }
           return ListResourceRecordSetsResponse.builder().isTruncated(false)
               .resourceRecordSets(responseRecords).build();
         });

@@ -74,7 +74,11 @@ public class Algorithm {
     }
     Sign.SignatureData signature = new SignatureData((byte) recId, ByteArray.subArray(sig, 0, 32),
         ByteArray.subArray(sig, 32, 64));
-    return Sign.signedMessageToKey(msg.getBytes(), signature);
+    try {
+      return Sign.signedMessageToKey(msg.getBytes(), signature);
+    } catch (ArithmeticException e) {
+      throw new SignatureException("Invalid signature", e);
+    }
   }
 
   /**

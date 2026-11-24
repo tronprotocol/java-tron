@@ -1,6 +1,7 @@
 package org.tron.p2p.connection;
 
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.RateLimiter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
@@ -40,6 +41,8 @@ public class Channel {
 
   public volatile boolean waitForPong = false;
   public volatile long pingSent = System.currentTimeMillis();
+  @Getter
+  private final RateLimiter pingRateLimiter = RateLimiter.create(1.0);
 
   @Getter
   private HelloMessage helloMessage;

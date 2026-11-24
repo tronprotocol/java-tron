@@ -80,9 +80,11 @@ public class P2pProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
     in.markReaderIndex();
     int preIndex = in.readerIndex();
     int length = readRawVarint32(in);
-    if (length >= Parameter.MAX_MESSAGE_LENGTH) {
-      logger.warn("Receive a big msg or not encoded msg, host : {}, msg length is : {}",
-          ctx.channel().remoteAddress(), length);
+    int maxLength = channel.isFinishHandshake()
+        ? Parameter.MAX_MESSAGE_LENGTH : Parameter.MAX_PRE_HANDSHAKE_LENGTH;
+    if (length >= maxLength) {
+      logger.warn("Receive a big msg or not encoded msg, host : {}, msg length is : {}, limit : {}",
+          ctx.channel().remoteAddress(), length, maxLength);
       in.clear();
       channel.send(new P2pDisconnectMessage(DisconnectReason.BAD_MESSAGE));
       channel.close();

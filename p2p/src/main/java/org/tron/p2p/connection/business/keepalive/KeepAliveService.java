@@ -59,6 +59,11 @@ public class KeepAliveService implements MessageProcess {
   public void processMessage(Channel channel, Message message) {
     switch (message.getType()) {
       case KEEP_ALIVE_PING:
+        if (!channel.getPingRateLimiter().tryAcquire()) {
+          channel.send(new P2pDisconnectMessage(DisconnectReason.BAD_PROTOCOL));
+          channel.close();
+          return;
+        }
         channel.send(new PongMessage());
         break;
       case KEEP_ALIVE_PONG:

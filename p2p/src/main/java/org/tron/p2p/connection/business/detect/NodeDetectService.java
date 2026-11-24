@@ -182,6 +182,16 @@ public class NodeDetectService implements MessageProcess {
         return;
       }
 
+      int networkId = Parameter.p2pConfig.getNetworkId();
+      // Discovery fallback uses this same Node instance when selecting connection candidates.
+      nodeStat.getNode().setNetworkId(statusMessage.getNetworkId());
+      if (statusMessage.getNetworkId() != networkId) {
+        logger.debug("Ignore STATUS from {}, network id {}, expected {}", socketAddress,
+            statusMessage.getNetworkId(), networkId);
+        nodeStatMap.remove(socketAddress, nodeStat);
+        return;
+      }
+
       long cost = System.currentTimeMillis() - nodeStat.getLastDetectTime();
       if (cost > NODE_DETECT_TIMEOUT
           || statusMessage.getRemainConnections() == 0) {
@@ -236,8 +246,10 @@ public class NodeDetectService implements MessageProcess {
   public synchronized List<Node> getConnectableNodes() {
     List<NodeStat> stats = new ArrayList<>();
     List<Node> nodes = new ArrayList<>();
+    int networkId = Parameter.p2pConfig.getNetworkId();
     nodeStatMap.values().forEach(stat -> {
-      if (stat.getStatusMessage() != null) {
+      if (stat.getStatusMessage() != null
+          && stat.getStatusMessage().getNetworkId() == networkId) {
         stats.add(stat);
       }
     });

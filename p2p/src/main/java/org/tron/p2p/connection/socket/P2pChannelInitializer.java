@@ -4,12 +4,13 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.FixedRecvByteBufAllocator;
+import io.netty.channel.DefaultMaxMessagesRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
 import org.tron.p2p.connection.ConnectionPolicy;
@@ -56,10 +57,9 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
       final Channel channel = new Channel();
       channel.init(ch.pipeline(), remoteId, nodeDetectMode);
 
-      // limit the size of receiving buffer to 1024
-      ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
+      // Keep incomplete pre-HELLO frames from retaining a normal 256 KiB receive buffer.
+      ch.config().setRecvByteBufAllocator(new P2pRecvByteBufAllocator(channel));
       ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
-      ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
 
       // Route STATUS-probe and regular peer cleanup separately.
       ch.closeFuture().addListener((ChannelFutureListener) future -> {
@@ -99,4 +99,27 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
         .addListener(ChannelFutureListener.CLOSE);
   }
 
+  /** Limits receive allocations before HELLO without replacing Netty's cached read handle. */
+  private static final class P2pRecvByteBufAllocator
+      extends DefaultMaxMessagesRecvByteBufAllocator {
+
+    private static final int NORMAL_RECEIVE_BUFFER_SIZE = 256 * 1024;
+
+    private final Channel channel;
+
+    private P2pRecvByteBufAllocator(Channel channel) {
+      this.channel = channel;
+    }
+
+    @Override
+    public Handle newHandle() {
+      return new MaxMessageHandle() {
+        @Override
+        public int guess() {
+          return channel.isFinishHandshake()
+              ? NORMAL_RECEIVE_BUFFER_SIZE : Parameter.MAX_PRE_HANDSHAKE_LENGTH;
+        }
+      };
+    }
+  }
 }
