@@ -4,7 +4,6 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -262,20 +261,22 @@ public class TransactionTrace {
 
       // just fo caller is not origin, we set the related field for origin account
       if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
-        resetAccountUsage(origin,
+        energyProcessor.resetAccountUsage(origin,
             receipt.getOriginEnergyUsage(),
             receipt.getOriginEnergyWindowSize(),
             receipt.getOriginEnergyMergedUsage(),
             receipt.getOriginEnergyMergedWindowSize(),
-            receipt.getOriginEnergyWindowSizeV2());
+            receipt.getOriginEnergyWindowSizeV2(),
+            receipt.getOriginEnergyMergedWindowSizeV2());
       }
 
-      resetAccountUsage(caller,
+      energyProcessor.resetAccountUsage(caller,
           receipt.getCallerEnergyUsage(),
           receipt.getCallerEnergyWindowSize(),
           receipt.getCallerEnergyMergedUsage(),
           receipt.getCallerEnergyMergedWindowSize(),
-          receipt.getCallerEnergyWindowSizeV2());
+          receipt.getCallerEnergyWindowSizeV2(),
+          receipt.getCallerEnergyMergedWindowSizeV2());
       // payEnergyBill returns before storing the account when usage is zero, which keeps the
       // committed Stake 2.0 reservation. Same-address origin is a second unmodified load.
       if (dynamicPropertiesStore.allowTvmResourceOptimization()
@@ -293,67 +294,6 @@ public class TransactionTrace {
         percent, originEnergyLimit,
         energyProcessor,
         EnergyProcessor.getHeadSlot(dynamicPropertiesStore));
-  }
-
-  private void resetAccountUsage(AccountCapsule accountCap,
-      long usage, long size, long mergedUsage, long mergedSize, long size2) {
-    if (dynamicPropertiesStore.supportAllowCancelAllUnfreezeV2()) {
-      resetAccountUsageV2(accountCap, usage, size, mergedUsage, mergedSize, size2);
-      return;
-    }
-    long currentSize = accountCap.getWindowSize(ENERGY);
-    long currentUsage = accountCap.getEnergyUsage();
-    boolean allowOptimization = dynamicPropertiesStore.allowTvmResourceOptimization();
-    // Drop the pre consumed frozen energy
-    long newArea = currentUsage * currentSize
-        - (mergedUsage * mergedSize - usage * size);
-    // If area merging happened during suicide, use the current window size
-    boolean areaMerged = allowOptimization
-        ? currentUsage > mergedUsage || mergedSize != currentSize
-        : mergedSize != currentSize;
-    long newSize = areaMerged ? currentSize : size;
-    // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
-    if (allowOptimization) {
-      checkResetEnergyUsage(newUsage);
-    }
-    // Reset account usage and window size
-    accountCap.setEnergyUsage(newUsage);
-    accountCap.setNewWindowSize(ENERGY, newUsage == 0 ? 0L : newSize);
-  }
-
-  private void resetAccountUsageV2(AccountCapsule accountCap,
-      long usage, long size, long mergedUsage, long mergedSize, long size2) {
-    long currentSize = accountCap.getWindowSize(ENERGY);
-    long currentSize2 = accountCap.getWindowSizeV2(ENERGY);
-    long currentUsage = accountCap.getEnergyUsage();
-    boolean allowOptimization = dynamicPropertiesStore.allowTvmResourceOptimization();
-    // Drop the pre consumed frozen energy
-    long newArea = currentUsage * currentSize - (mergedUsage * mergedSize - usage * size);
-    // If area merging happened during suicide, use the current window size
-    boolean areaMerged = allowOptimization
-        ? currentUsage > mergedUsage || mergedSize != currentSize
-        : mergedSize != currentSize;
-    long newSize = areaMerged ? currentSize : size;
-    long newSize2 = areaMerged ? currentSize2 : size2;
-    // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
-    if (allowOptimization) {
-      checkResetEnergyUsage(newUsage);
-    }
-    // Reset account usage and window size
-    accountCap.setEnergyUsage(newUsage);
-    accountCap.setNewWindowSizeV2(ENERGY, newUsage == 0 ? 0L : newSize2);
-  }
-
-  private void checkResetEnergyUsage(long newUsage) {
-    long totalEnergyCurrentLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
-    long maxUsage = totalEnergyCurrentLimit <= 0 ? 0L
-        : (totalEnergyCurrentLimit > Long.MAX_VALUE / 2
-            ? Long.MAX_VALUE : totalEnergyCurrentLimit * 2);
-    if (newUsage > maxUsage) {
-      throw new ArithmeticException("Energy usage exceeds limit: " + newUsage);
-    }
   }
 
   public boolean checkNeedRetry() {

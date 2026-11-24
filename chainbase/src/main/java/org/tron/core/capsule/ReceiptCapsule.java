@@ -83,6 +83,10 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyMergedWindowSize;
 
+  @Getter
+  @Setter
+  private long callerEnergyMergedWindowSizeV2;
+
   /**
    * Window size of origin before merging frozen energy
    */
@@ -100,6 +104,10 @@ public class ReceiptCapsule {
   @Getter
   @Setter
   private long originEnergyMergedWindowSize;
+
+  @Getter
+  @Setter
+  private long originEnergyMergedWindowSizeV2;
 
   private Sha256Hash receiptAddress;
 

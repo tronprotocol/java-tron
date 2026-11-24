@@ -201,5 +201,114 @@ public class EnergyProcessor extends ResourceProcessor {
     }
     return value * numerator / denominator;
   }
+
+  public void resetAccountUsage(AccountCapsule accountCap,
+      long usage, long size, long mergedUsage, long mergedSize, long size2, long mergedSize2) {
+    if (dynamicPropertiesStore.supportAllowCancelAllUnfreezeV2()) {
+      resetAccountUsageV2(accountCap, usage, size, mergedUsage, mergedSize, size2, mergedSize2);
+      return;
+    }
+    long currentSize = accountCap.getWindowSize(ENERGY);
+    long currentUsage = accountCap.getEnergyUsage();
+    boolean allowOptimization = dynamicPropertiesStore.allowTvmResourceOptimization();
+    long newSize;
+    long newUsage;
+    if (allowOptimization) {
+      boolean areaMerged = currentUsage > mergedUsage || mergedSize != currentSize;
+      newSize = areaMerged ? currentSize : size;
+      if (hardenCalculation()) {
+        newUsage = calcResetUsageHardened(
+            currentUsage, currentSize, mergedUsage, mergedSize, usage, size, newSize);
+      } else {
+        // Drop the pre consumed frozen energy
+        long newArea = currentUsage * currentSize
+            - (mergedUsage * mergedSize - usage * size);
+        // Calc new usage by fixed x-axes
+        newUsage = max(0, newArea / newSize, disableJavaLangMath());
+        checkResetEnergyUsage(newUsage);
+      }
+    } else {
+      // Drop the pre consumed frozen energy
+      long newArea = currentUsage * currentSize
+          - (mergedUsage * mergedSize - usage * size);
+      // If area merging happened during suicide, use the current window size
+      newSize = mergedSize == currentSize ? size : currentSize;
+      // Calc new usage by fixed x-axes
+      newUsage = max(0, newArea / newSize, disableJavaLangMath());
+    }
+    // Reset account usage and window size
+    accountCap.setEnergyUsage(newUsage);
+    accountCap.setNewWindowSize(ENERGY, newUsage == 0 ? 0L : newSize);
+  }
+
+  private void resetAccountUsageV2(AccountCapsule accountCap,
+      long usage, long size, long mergedUsage, long mergedSize, long size2, long mergedSize2) {
+    long currentSize = accountCap.getWindowSize(ENERGY);
+    long currentSize2 = accountCap.getWindowSizeV2(ENERGY);
+    long currentUsage = accountCap.getEnergyUsage();
+    boolean allowOptimization = dynamicPropertiesStore.allowTvmResourceOptimization();
+    long newSize2;
+    long newUsage;
+    if (allowOptimization) {
+      boolean areaMerged = currentUsage > mergedUsage || mergedSize2 != currentSize2;
+      newSize2 = areaMerged ? currentSize2 : size2;
+      if (hardenCalculation()) {
+        newUsage = calcResetUsageHardened(
+            currentUsage, currentSize2, mergedUsage, mergedSize2, usage, size2, newSize2);
+      } else {
+        // Drop the pre consumed frozen energy
+        long newArea = currentUsage * currentSize2
+            - (mergedUsage * mergedSize2 - usage * size2);
+        // Calc new usage by fixed x-axes
+        newUsage = max(0, newArea / newSize2, disableJavaLangMath());
+        checkResetEnergyUsage(newUsage);
+      }
+    } else {
+      // Drop the pre consumed frozen energy
+      long newArea = currentUsage * currentSize - (mergedUsage * mergedSize - usage * size);
+      // If area merging happened during suicide, use the current window size
+      long newSize = mergedSize == currentSize ? size : currentSize;
+      newSize2 = mergedSize == currentSize ? size2 : currentSize2;
+      // Calc new usage by fixed x-axes
+      newUsage = max(0, newArea / newSize, disableJavaLangMath());
+    }
+    // Reset account usage and window size
+    accountCap.setEnergyUsage(newUsage);
+    accountCap.setNewWindowSizeV2(ENERGY, newUsage == 0 ? 0L : newSize2);
+  }
+
+  private long calcResetUsageHardened(long currentUsage, long currentSize,
+      long mergedUsage, long mergedSize, long usage, long size, long newSize) {
+    BigInteger newArea = BigInteger.valueOf(currentUsage)
+        .multiply(BigInteger.valueOf(currentSize))
+        .subtract(BigInteger.valueOf(mergedUsage)
+            .multiply(BigInteger.valueOf(mergedSize))
+            .subtract(BigInteger.valueOf(usage)
+                .multiply(BigInteger.valueOf(size))));
+    if (newArea.signum() <= 0) {
+      return 0L;
+    }
+    return checkResetEnergyUsage(newArea.divide(BigInteger.valueOf(newSize)));
+  }
+
+  private void checkResetEnergyUsage(long newUsage) {
+    long maxUsage = getMaxResetEnergyUsage();
+    if (newUsage > maxUsage) {
+      throw new ArithmeticException("Energy usage exceeds limit: " + newUsage);
+    }
+  }
+
+  private long checkResetEnergyUsage(BigInteger newUsage) {
+    long maxUsage = getMaxResetEnergyUsage();
+    if (newUsage.compareTo(BigInteger.valueOf(maxUsage)) > 0) {
+      throw new ArithmeticException("Energy usage exceeds limit: " + newUsage);
+    }
+    return newUsage.longValueExact();
+  }
+
+  private long getMaxResetEnergyUsage() {
+    long totalEnergyCurrentLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
+    return totalEnergyCurrentLimit <= 0 ? 0L : totalEnergyCurrentLimit;
+  }
 }
 
