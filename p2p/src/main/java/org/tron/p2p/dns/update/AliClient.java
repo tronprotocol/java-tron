@@ -1,5 +1,7 @@
 package org.tron.p2p.dns.update;
 
+import static org.tron.p2p.dns.tree.Entry.rootPrefix;
+
 import com.aliyun.alidns20150109.Client;
 import com.aliyun.alidns20150109.models.AddDomainRecordRequest;
 import com.aliyun.alidns20150109.models.AddDomainRecordResponse;
@@ -139,10 +141,13 @@ public class AliClient implements Publish {
           for (DescribeDomainRecordsResponseBodyDomainRecordsRecord r : response.getBody()
               .getDomainRecords().getRecord()) {
             String name = StringUtils.stripEnd(r.getRR(), ".");
-            records.put(name, r);
             if (aliyunRoot.equalsIgnoreCase(name)) {
+              if (StringUtils.isEmpty(r.value) || !r.value.startsWith(rootPrefix)) {
+                continue;
+              }
               rootContent = r.value;
             }
+            records.put(name, r);
             if (StringUtils.isNotEmpty(r.value) && r.value.startsWith(
                 org.tron.p2p.dns.tree.Entry.nodesPrefix)) {
               NodesEntry nodesEntry;

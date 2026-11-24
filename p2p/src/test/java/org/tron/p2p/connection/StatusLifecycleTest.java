@@ -3,21 +3,29 @@ package org.tron.p2p.connection;
 import com.google.protobuf.ByteString;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.io.DataInputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +53,10 @@ import org.tron.p2p.connection.message.detect.StatusMessage;
 import org.tron.p2p.connection.message.handshake.HelloMessage;
 import org.tron.p2p.connection.socket.MessageHandler;
 import org.tron.p2p.connection.socket.P2pChannelInitializer;
+import org.tron.p2p.connection.socket.PeerClient;
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.discover.NodeManager;
+import org.tron.p2p.discover.protocol.kad.KadService;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.utils.NetUtil;
@@ -244,7 +255,61 @@ public class StatusLifecycleTest {
     Assert.assertSame(stat, nodeStats().get(stat.getSocketAddress()));
     Assert.assertNotNull(stat.getStatusMessage());
     Assert.assertTrue(stat.finishDetect());
+    Assert.assertTrue(detect.getConnectableNodes().contains(stat.getNode()));
     Assert.assertTrue(NodeDetectService.getBadNodesCache().asMap().isEmpty());
+  }
+
+  @Test
+  public void outboundForeignNetworkStatusRemovesFreshAndCachedResults() throws Exception {
+    for (boolean cached : new boolean[]{false, true}) {
+      StatusMessage previous = cached ? status() : null;
+      io.netty.channel.Channel server = statusServer(
+          status(Parameter.p2pConfig.getNetworkId() + 1, 1));
+      try {
+        NodeStat stat = probe((InetSocketAddress) server.localAddress(), false, previous);
+
+        Assert.assertFalse(nodeStats().containsKey(stat.getSocketAddress()));
+        Assert.assertSame(previous, stat.getStatusMessage());
+        Assert.assertFalse(stat.finishDetect());
+        Assert.assertTrue(detect.getConnectableNodes().isEmpty());
+        Assert.assertTrue(NodeDetectService.getBadNodesCache().asMap().isEmpty());
+        Assert.assertTrue(ChannelManager.getBannedNodes().asMap().isEmpty());
+        assertNotDialedFromDiscovery(stat.getNode());
+      } finally {
+        server.close().sync();
+      }
+    }
+  }
+
+  @Test
+  public void cachedForeignNetworkStatusIsExcludedWithoutChangingCandidateOrder() throws Exception {
+    NodeStat foreign = cachedStatus("192.0.2.1", Parameter.p2pConfig.getNetworkId() + 1, 50);
+    NodeStat slow = cachedStatus("192.0.2.2", Parameter.p2pConfig.getNetworkId(), 1);
+    NodeStat fast = cachedStatus("192.0.2.3", Parameter.p2pConfig.getNetworkId(), 10);
+    NodeStat unfinished = new NodeStat(new Node(new InetSocketAddress("192.0.2.4", 18888)));
+    nodeStats().put(unfinished.getSocketAddress(), unfinished);
+
+    List<Node> candidates = detect.getConnectableNodes();
+
+    Assert.assertEquals(2, candidates.size());
+    Assert.assertSame(fast.getNode(), candidates.get(0));
+    Assert.assertSame(slow.getNode(), candidates.get(1));
+    Assert.assertFalse(candidates.contains(foreign.getNode()));
+  }
+
+  @Test
+  public void cachedStatusCandidatesUseTheCurrentConfiguredNetwork() throws Exception {
+    int networkId = Parameter.p2pConfig.getNetworkId();
+    NodeStat first = cachedStatus("192.0.2.1", networkId, 1);
+    NodeStat second = cachedStatus("192.0.2.2", networkId + 1, 1);
+
+    Assert.assertEquals(1, detect.getConnectableNodes().size());
+    Assert.assertSame(first.getNode(), detect.getConnectableNodes().get(0));
+
+    Parameter.p2pConfig.setNetworkId(networkId + 1);
+
+    Assert.assertEquals(1, detect.getConnectableNodes().size());
+    Assert.assertSame(second.getNode(), detect.getConnectableNodes().get(0));
   }
 
   @Test
@@ -304,8 +369,18 @@ public class StatusLifecycleTest {
   }
 
   private NodeStat probe(InetSocketAddress address, boolean expired) throws Exception {
+    return probe(address, expired, null);
+  }
+
+  private NodeStat probe(InetSocketAddress address, boolean expired, StatusMessage previous)
+      throws Exception {
     NodeStat stat = new NodeStat(new Node(address));
+    stat.getNode().setNetworkId(Parameter.p2pConfig.getNetworkId());
     stat.setLastDetectTime(System.currentTimeMillis() - (expired ? 3000 : 0));
+    stat.setStatusMessage(previous);
+    if (previous != null) {
+      stat.setLastSuccessDetectTime(stat.getLastDetectTime() - 1);
+    }
     nodeStats().put(address, stat);
     io.netty.channel.Channel socket = new Bootstrap().group(group).channel(NioSocketChannel.class)
         .handler(initializer(stat.getNode().getHexId(), true)).connect(address).sync().channel();
@@ -319,6 +394,67 @@ public class StatusLifecycleTest {
     Assert.assertEquals(0, connected.get());
     Assert.assertEquals(0, disconnected.get());
     return stat;
+  }
+
+  private void assertNotDialedFromDiscovery(Node candidate) throws Exception {
+    Field discovery = NodeManager.class.getDeclaredField("discoverService");
+    discovery.setAccessible(true);
+    Object previous = discovery.get(null);
+    List<Node> dialed = new ArrayList<>();
+    try {
+      discovery.set(null, new KadService() {
+        @Override
+        public List<Node> getAllNodes() {
+          return Collections.singletonList(candidate);
+        }
+      });
+      set(ConnPoolService.class, pool, "peerClient", new PeerClient() {
+        @Override
+        public ChannelFuture connectAsync(Node node, boolean nodeDetectMode) {
+          dialed.add(node);
+          return null;
+        }
+      });
+      Parameter.p2pConfig.setMinConnections(1);
+      Parameter.p2pConfig.setMinActiveConnections(1);
+      Method connect = ConnPoolService.class.getDeclaredMethod("connect", boolean.class);
+      connect.setAccessible(true);
+
+      connect.invoke(pool, false);
+
+      Assert.assertTrue(NodeManager.getConnectableNodes().isEmpty());
+      Assert.assertTrue(dialed.isEmpty());
+    } finally {
+      discovery.set(null, previous);
+    }
+  }
+
+  private NodeStat cachedStatus(String ip, int networkId, int remaining) throws Exception {
+    NodeStat stat = new NodeStat(new Node(new InetSocketAddress(ip, 18888)));
+    stat.setStatusMessage(status(networkId, remaining));
+    nodeStats().put(stat.getSocketAddress(), stat);
+    return stat;
+  }
+
+  private io.netty.channel.Channel statusServer(StatusMessage response) throws Exception {
+    return new ServerBootstrap().group(group).channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<NioSocketChannel>() {
+          @Override
+          protected void initChannel(NioSocketChannel socket) {
+            socket.pipeline().addLast(new ProtobufVarint32FrameDecoder());
+            socket.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
+            socket.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+              @Override
+              protected void channelRead0(ChannelHandlerContext ctx, ByteBuf frame)
+                  throws Exception {
+                byte[] data = new byte[frame.readableBytes()];
+                frame.readBytes(data);
+                Assert.assertEquals(MessageType.STATUS, Message.parse(data).getType());
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(response.getSendData()));
+              }
+            });
+          }
+        }).bind("127.0.0.1", 0).sync().channel();
   }
 
   @SuppressWarnings("unchecked")
@@ -379,8 +515,12 @@ public class StatusLifecycleTest {
   }
 
   private StatusMessage status() throws Exception {
+    return status(Parameter.p2pConfig.getNetworkId(), 50);
+  }
+
+  private StatusMessage status(int networkId, int remaining) throws Exception {
     return new StatusMessage(Connect.StatusMessage.newBuilder().setFrom(endpoint())
-        .setNetworkId(Parameter.p2pConfig.getNetworkId()).setMaxConnections(50)
+        .setNetworkId(networkId).setMaxConnections(50).setCurrentConnections(50 - remaining)
         .setTimestamp(System.currentTimeMillis()).build().toByteArray());
   }
 

@@ -157,13 +157,12 @@ public class OutboundHandshakeTimeoutHandlerTest {
   @Test
   public void pingTrafficDoesNotExtendHelloDeadline() throws Exception {
     EmbeddedChannel socket = outbound(REMOTE, false, false);
-    for (long elapsed = 1; elapsed < Parameter.HANDSHAKE_TIMEOUT_SECONDS; elapsed++) {
-      advance(socket, 1);
-      receive(socket, new PingMessage().getSendData());
-      Assert.assertEquals(MessageType.KEEP_ALIVE_PONG,
-          Message.parse(readOutbound(socket)).getType());
-      Assert.assertTrue(socket.isOpen());
-    }
+    // Embedded time does not advance the monotonic clock used by the PING rate limit.
+    advance(socket, Parameter.HANDSHAKE_TIMEOUT_SECONDS - 1);
+    receive(socket, new PingMessage().getSendData());
+    Assert.assertEquals(MessageType.KEEP_ALIVE_PONG,
+        Message.parse(readOutbound(socket)).getType());
+    Assert.assertTrue(socket.isOpen());
     advance(socket, 1);
     Assert.assertFalse(socket.isOpen());
     Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());

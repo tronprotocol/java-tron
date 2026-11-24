@@ -35,7 +35,7 @@ public class Node implements Serializable, Cloneable {
   @Setter
   private int bindPort;
 
-  /** Network identifier learned from discovery PING/PONG messages. */
+  /** Network identifier learned from discovery PING/PONG messages or TCP STATUS probes. */
   @Setter
   private int networkId;
 

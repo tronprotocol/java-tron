@@ -16,6 +16,7 @@ import org.tron.p2p.exception.DnsException;
 import org.tron.p2p.exception.DnsException.TypeEnum;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Name;
+import org.xbill.DNS.Record;
 import org.xbill.DNS.TXTRecord;
 
 public class SyncTest {
@@ -28,8 +29,8 @@ public class SyncTest {
     String url = LinkEntry.buildRepresent(published.getBase32PublicKey(), DOMAIN);
     Client syncClient = new Client();
     try (MockedStatic<LookUpTxt> lookup = Mockito.mockStatic(LookUpTxt.class)) {
-      lookup.when(() -> LookUpTxt.lookUpTxt(DOMAIN)).thenReturn(new TXTRecord(
-          Name.fromString(DOMAIN + "."), DClass.IN, 60, published.getRootEntry().toFormat()));
+      lookup.when(() -> LookUpTxt.lookUpTxtRecords(DOMAIN)).thenReturn(new Record[]{new TXTRecord(
+          Name.fromString(DOMAIN + "."), DClass.IN, 60, published.getRootEntry().toFormat())});
       for (Map.Entry<String, Entry> entry : published.getEntries().entrySet()) {
         lookup.when(() -> LookUpTxt.lookUpTxt(entry.getKey(), DOMAIN)).thenReturn(new TXTRecord(
             Name.fromString(entry.getKey() + "." + DOMAIN + "."), DClass.IN, 60,

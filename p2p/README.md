@@ -3,7 +3,7 @@
 Peer discovery, connection management and DNS-based node lists for java-tron.
 
 > **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
-> v2.2.9, synchronized through `release-v2.3.0` at `94dbc75896dc68c72934276c8d3143b4a3540363`.**
+> v2.2.9, synchronized through `release-v2.3.0` at `18da461f1312cb7d7c8d13dccf992e5f78a55a36`.**
 > It lives here as the `:p2p` Gradle module and is consumed as a
 > project dependency, not as a published artifact — `:common` exposes it via
 > `api project(":p2p")`. Upstream's own README follows, edited where
@@ -19,8 +19,18 @@ Bouncy Castle is upgraded in the root build as well as this module so all consum
 Pending writes have a 200 MiB per-connection threshold and a 500 MiB shared eviction threshold;
 the latter triggers asynchronous eviction rather than enforcing a hard global admission limit.
 Writes that remain incomplete for 10 seconds close the connection. Ordinary inbound HELLOs are
-admitted while the total pending count is below 32; trusted IPs can use capacity up to 40 total.
+admitted while the total pending count is below 1016; trusted IPs can use capacity up to 1024 total.
 The per-IP pending limit remains two, and the absolute HELLO deadline remains 10 seconds.
+Before HELLO completes, inbound and outbound frames declaring 1024 bytes or more are rejected,
+including trusted peers; receive allocations are 1024 bytes and grow to 256 KiB after HELLO.
+Established connections retain the existing 5 MiB frame limit. Inbound keepalive PINGs use a
+per-connection limiter at one permit per second with Guava's default burst behavior.
+
+The `net` logger samples UDP discovery rejections by reason, with packet previews capped at
+128 bytes. In each summary, `suppressed` counts samples skipped since the previous summary,
+and `total` counts rejected packets for that decoder and reason while its log level was enabled.
+Pending counts are reported before the next sample, on a one-minute timer, or when the decoder
+is removed, provided the log level is enabled.
 
 Previously generated DNS tree URLs may need updating; see the
 [migration notes](#124-migration-for-previously-generated-tree-urls).

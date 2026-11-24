@@ -1,5 +1,6 @@
 package org.tron.p2p.dns.update;
 
+import static org.tron.p2p.dns.tree.Entry.rootPrefix;
 import static org.tron.p2p.utils.NetUtil.normalizeDomain;
 
 import java.math.BigInteger;
@@ -57,6 +58,7 @@ public class AwsClient implements Publish {
   private Route53Client route53Client;
   private String zoneId;
   private Set<DnsNode> serverNodes;
+  private long changePollIntervalMillis = 15 * 1000;
   private static final String symbol = "\"";
   private static final String postfix = ".";
   private double changeThreshold;
@@ -116,6 +118,11 @@ public class AwsClient implements Publish {
 
   @Override
   public void testConnect() throws Exception {
+    if (StringUtils.isNotEmpty(zoneId)) {
+      route53Client.listResourceRecordSets(ListResourceRecordSetsRequest.builder()
+          .hostedZoneId(zoneId).maxItems("1").build());
+      return;
+    }
     ListHostedZonesByNameRequest.Builder request = ListHostedZonesByNameRequest.builder();
     while (true) {
       ListHostedZonesByNameResponse response = route53Client.listHostedZonesByName(request.build());
@@ -227,7 +234,12 @@ public class AwsClient implements Publish {
         String content = StringUtils.join(values, "");
         content = StringUtils.strip(content, symbol);
         if (rootDomain.equalsIgnoreCase(name)) {
-          rootContent = content;
+          for (String value : values) {
+            String txt = StringUtils.strip(value, symbol);
+            if (txt.startsWith(rootPrefix)) {
+              rootContent = txt;
+            }
+          }
         }
         if (content.startsWith(org.tron.p2p.dns.tree.Entry.nodesPrefix)) {
           NodesEntry nodesEntry;
@@ -313,15 +325,19 @@ public class AwsClient implements Publish {
       while (true) {
         GetChangeResponse changeResponse = route53Client.getChange(request.build());
         count += 1;
-        if (changeResponse.changeInfo().status() == ChangeStatus.INSYNC || count >= maxRetryLimit) {
+        if (changeResponse.changeInfo().status() == ChangeStatus.INSYNC) {
           break;
         }
+        if (count >= maxRetryLimit) {
+          throw new IllegalStateException("Timed out waiting for Route53 change "
+              + response.changeInfo().id() + " to reach INSYNC");
+        }
         try {
-          Thread.sleep(15 * 1000);
+          Thread.sleep(changePollIntervalMillis);
         } catch (InterruptedException e) {
-          // Upstream swallows the interrupt without restoring the flag, so this
-          // loop keeps polling until INSYNC or maxRetryLimit. Behaviour is
-          // preserved here; see the PR description for the deferred fix.
+          Thread.currentThread().interrupt();
+          throw new IllegalStateException("Interrupted while waiting for Route53 change "
+              + response.changeInfo().id(), e);
         }
       }
     }
@@ -351,10 +367,22 @@ public class AwsClient implements Publish {
       } else {
         RecordSet recordSet = existing.get(path);
         String preValue = StringUtils.join(recordSet.values, "");
+        List<String> newValues = new ArrayList<>();
+        if (path.equalsIgnoreCase(domain)) {
+          preValue = "";
+          for (String oldValue : recordSet.values) {
+            if (StringUtils.strip(oldValue, symbol).startsWith(rootPrefix)) {
+              preValue = oldValue;
+            } else {
+              newValues.add(oldValue);
+            }
+          }
+        }
+        newValues.add(newValue);
 
         if (!preValue.equalsIgnoreCase(newValue) || recordSet.ttl != ttl) {
           logger.info("Updating {} from [{}] to [{}]", path, preValue, newValue);
-          if (path.equalsIgnoreCase(domain)) {
+          if (path.equalsIgnoreCase(domain) && !preValue.isEmpty()) {
             try {
               RootEntry oldRoot = RootEntry.parseEntry(StringUtils.strip(preValue, symbol));
               RootEntry newRoot = RootEntry.parseEntry(StringUtils.strip(newValue, symbol));
@@ -364,7 +392,8 @@ public class AwsClient implements Publish {
               //ignore
             }
           }
-          Change change = newTXTChange(ChangeAction.UPSERT, path, ttl, newValue);
+          Change change = newTXTChange(ChangeAction.UPSERT, path, ttl,
+              newValues.toArray(new String[0]));
           changes.add(change);
         }
       }
@@ -405,15 +434,21 @@ public class AwsClient implements Publish {
   }
 
   private static int getChangeOrder(Change change) {
+    // Publish the root after its dependencies and before deleting old records.
+    if ((change.action() == ChangeAction.CREATE || change.action() == ChangeAction.UPSERT)
+        && change.resourceRecordSet().resourceRecords().stream()
+            .anyMatch(record -> StringUtils.strip(record.value(), symbol).startsWith(rootPrefix))) {
+      return 3;
+    }
     switch (change.action()) {
       case CREATE:
         return 1;
       case UPSERT:
         return 2;
       case DELETE:
-        return 3;
-      default:
         return 4;
+      default:
+        return 5;
     }
   }
 

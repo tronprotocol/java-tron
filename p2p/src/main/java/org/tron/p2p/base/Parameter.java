@@ -30,11 +30,14 @@ public class Parameter {
   // Node detection timeout in milliseconds.
   public static final int NODE_DETECT_TIMEOUT = 2000;
 
-  // Admission threshold for ordinary inbound connections, counting all pending HELLOs.
-  public static final int MAX_PENDING_INBOUND_CONNECTIONS = 32;
-
   // Absolute limit for all inbound connections waiting for HELLO, including trusted IPs.
-  public static final int MAX_TOTAL_PENDING_INBOUND_CONNECTIONS = 40;
+  // Assumes the effective soft RLIMIT_NOFILE leaves room for these sockets in addition to
+  // peak application FD usage and operating headroom; libp2p does not change the process limit.
+  public static final int MAX_TOTAL_PENDING_INBOUND_CONNECTIONS = 1024;
+
+  // Reserve eight pending HELLO slots for trusted IPs above the ordinary admission threshold.
+  public static final int MAX_PENDING_INBOUND_CONNECTIONS =
+      MAX_TOTAL_PENDING_INBOUND_CONNECTIONS - 8;
 
   public static final int MAX_PENDING_INBOUND_CONNECTIONS_WITH_SAME_IP = 2;
 
@@ -59,6 +62,9 @@ public class Parameter {
   public static final long DEFAULT_BAN_TIME = 60_000;
 
   public static final int MAX_MESSAGE_LENGTH = 5 * 1024 * 1024;
+
+  // Reject frames declaring 1 KiB or more until the HELLO handshake completes.
+  public static final int MAX_PRE_HANDSHAKE_LENGTH = 1024;
 
   public static volatile P2pConfig p2pConfig;
 

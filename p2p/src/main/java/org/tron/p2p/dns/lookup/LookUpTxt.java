@@ -77,10 +77,15 @@ public class LookUpTxt {
     return lookUpTxt(hash + "." + domain);
   }
 
-  // only get first Record.
-  // as dns server has dns cache, we may get the name's latest TXTRecord ttl later after it changes
   public static TXTRecord lookUpTxt(String name) throws TextParseException, UnknownHostException {
-    TXTRecord txt = null;
+    Record[] records = lookUpTxtRecords(name);
+    return (records == null || records.length == 0) ? null
+        : (TXTRecord) records[records.length - 1];
+  }
+
+  // DNS caches may retain the previous TXT records until their TTL expires.
+  public static Record[] lookUpTxtRecords(String name)
+      throws TextParseException, UnknownHostException {
     logger.info("LookUp name: {}", name);
     Lookup lookup = createLookup(name, Type.TXT);
     int times = 0;
@@ -112,17 +117,14 @@ public class LookUpTxt {
       logger.error("Failed to lookUp name:{}", name);
       return null;
     }
-    for (Record item : records) {
-      txt = (TXTRecord) item;
-    }
-    return txt;
+    return records;
   }
 
   /**
    * Resolves a domain name to an IP address. Resolution order:
-   *   <li>OS name resolver ({@link InetAddress}) — reads {@code /etc/hosts} first,
-   *       so LAN IP mappings configured there are returned immediately without a DNS query.</li>
-   *   <li>Random public DNS server (fallback, retried up to {@link #maxRetryTimes} times).</li>
+   * <li>OS name resolver ({@link InetAddress}) — reads {@code /etc/hosts} first,
+   * so LAN IP mappings configured there are returned immediately without a DNS query.</li>
+   * <li>Random public DNS server (fallback, retried up to {@link #maxRetryTimes} times).</li>
    *
    * @param domain the domain name to resolve (e.g. {@code "nodes.example.com"})
    * @param useIPv4 {@code true} to query A records (IPv4); {@code false} to query AAAA

@@ -25,6 +25,7 @@ import org.tron.p2p.dns.tree.Tree;
 import org.tron.p2p.exception.DnsException;
 import org.tron.p2p.exception.DnsException.TypeEnum;
 import org.tron.p2p.utils.ByteArray;
+import org.xbill.DNS.Record;
 import org.xbill.DNS.TXTRecord;
 import org.xbill.DNS.TextParseException;
 
@@ -104,17 +105,30 @@ public class Client {
   public RootEntry resolveRoot(LinkEntry linkEntry) throws TextParseException, DnsException,
       SignatureException, UnknownHostException {
     //do not put root in cache
-    TXTRecord txtRecord = LookUpTxt.lookUpTxt(linkEntry.getDomain());
-    if (txtRecord == null) {
+    return parseRoot(linkEntry, LookUpTxt.lookUpTxtRecords(linkEntry.getDomain()));
+  }
+
+  // Unrelated TXT records, such as domain ownership verification, may share the root name.
+  // Check all candidates until a root verifies against the configured public key.
+  static RootEntry parseRoot(LinkEntry linkEntry, Record[] records) throws DnsException {
+    if (records == null) {
       throw new DnsException(TypeEnum.LOOK_UP_ROOT_FAILED, "domain: " + linkEntry.getDomain());
     }
-    for (String txt : txtRecord.getStrings()) {
-      if (txt.startsWith(Entry.rootPrefix)) {
-        return RootEntry.parseEntry(txt, linkEntry.getUnCompressHexPublicKey(),
-            linkEntry.getDomain());
+    Exception failure = null;
+    for (Record record : records) {
+      for (String txt : ((TXTRecord) record).getStrings()) {
+        if (txt.startsWith(Entry.rootPrefix)) {
+          try {
+            return RootEntry.parseEntry(txt, linkEntry.getUnCompressHexPublicKey(),
+                linkEntry.getDomain());
+          } catch (DnsException | SignatureException | IllegalArgumentException e) {
+            failure = e;
+          }
+        }
       }
     }
-    throw new DnsException(TypeEnum.NO_ROOT_FOUND, "domain: " + linkEntry.getDomain());
+    throw new DnsException(TypeEnum.NO_ROOT_FOUND,
+        TypeEnum.NO_ROOT_FOUND.getDesc() + ", domain: " + linkEntry.getDomain(), failure);
   }
 
   // resolveEntry retrieves an entry from the cache or fetches it from the network
