@@ -372,9 +372,9 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
   @Test
   public void resetAccountUsageValidatesEnergyLimitAfterOptimization() throws Exception {
     long totalLimit = 100_000_000L;
-    long cap = totalLimit * 2;
-    long overLimitUsage = 250_000_000L;
-    long withinCapUsage = 150_000_000L;
+    long cap = totalLimit;
+    long overLimitUsage = 150_000_000L;
+    long withinCapUsage = 80_000_000L;
     install(SOURCE, "60015000");
 
     for (long cancelAllV2 : new long[]{0, 1}) {
@@ -388,7 +388,7 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
         for (long initialUsage : new long[]{overLimitUsage, cap, withinCapUsage}) {
           setEnergyAccount(CALLER, 10_000L * TRX_PRECISION, initialUsage, 20_000L,
               cancelAllV2 == 1);
-          ownEnergyWeight(CALLER);
+          dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(20_000L);
 
           TransactionTrace trace = executeWithFeeLimit(SOURCE, 1_000_000L);
           assertSuccess(trace);
@@ -402,6 +402,100 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
         }
       }
     }
+  }
+
+  @Test
+  public void originEnergyResetUsesWindowSizeV2AfterOptimization()
+      throws Exception {
+    long totalLimit = 10_000_000_000L;
+    long initialUsage = 100_000L;
+    install(THIRD, "00");
+    install(SOURCE, destroy(THIRD));
+    install(OUTER, outer(SOURCE, false), THIRD, 0L, 5_000_000_000L);
+
+    for (long enabled : new long[]{0, 1}) {
+      for (long harden : new long[]{0, 1}) {
+        VMConfig.initAllowTvmResourceOptimization(enabled);
+        VMConfig.initAllowHardenResourceCalculation(harden);
+        dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(enabled);
+        dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(harden);
+        dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+        dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+        dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalLimit);
+
+        setEnergyAccount(CALLER, 499_999L * TRX_PRECISION, 0L, 0L, true);
+        setEnergyAccount(THIRD, 500_000L * TRX_PRECISION, initialUsage, 28_800L, true);
+        setEnergyAccount(SOURCE, 1L * TRX_PRECISION, 700L, 14_400L, true);
+        ownEnergyWeight(CALLER, THIRD, SOURCE);
+
+        TransactionTrace trace = executeWithFeeLimit(OUTER, 5_000_000L);
+        assertSuccess(trace);
+        assertEquals(28_800L, trace.getReceipt().getOriginEnergyMergedWindowSize());
+        assertEquals(28_800_000L, trace.getReceipt().getOriginEnergyMergedWindowSizeV2());
+        assertTrue(account(THIRD).getWindowSizeV2(ENERGY) < 28_800_000L);
+        assertEquals(28_799L, account(THIRD).getWindowSize(ENERGY));
+        finish(trace);
+
+        long txOriginUsage = trace.getReceipt().getOriginEnergyUsage();
+        assertTrue(txOriginUsage > 0 && txOriginUsage < initialUsage);
+        if (enabled == 1) {
+          assertTrue(account(THIRD).getEnergyUsage() >= initialUsage + txOriginUsage);
+        } else {
+          assertEquals(txOriginUsage, account(THIRD).getEnergyUsage());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void resetAccountUsageHardenedPreservesLargeUsage() {
+    long totalLimit = 400_000_000_000L;
+    long highUsage = 350_000_000_000L;
+    long overCapUsage = 450_000_000_000L;
+    install(THIRD, "00");
+    dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(1);
+    dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(1);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalLimit);
+    EnergyProcessor processor = new EnergyProcessor(
+        dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+
+    // V2: hardened BigInteger path preserves large usage without intermediate overflow.
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    long baseUsage = 100_000L;
+    long mergedDelta = 25_000L;
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, highUsage + mergedDelta, 28_800L, true);
+    AccountCapsule capV2 = account(THIRD);
+    capV2.setNewWindowSizeV2(ENERGY, 28_799_999L);
+    processor.resetAccountUsage(capV2,
+        baseUsage, 28_800L, highUsage, 28_800L, 28_800_000L, 28_800_000L);
+    assertTrue(capV2.getEnergyUsage() >= baseUsage);
+    assertEquals(28_799_999L, capV2.getWindowSizeV2(ENERGY));
+
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, highUsage, 28_800L, true);
+    AccountCapsule sameUsageV2 = account(THIRD);
+    processor.resetAccountUsage(sameUsageV2,
+        highUsage, 28_800L, highUsage, 28_800L, 28_800_000L, 28_800_000L);
+    assertEquals(highUsage, sameUsageV2.getEnergyUsage());
+    assertEquals(28_800_000L, sameUsageV2.getWindowSizeV2(ENERGY));
+
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, overCapUsage, 28_800L, true);
+    AccountCapsule overCapV2 = account(THIRD);
+    assertThrows(ArithmeticException.class, () -> processor.resetAccountUsage(overCapV2,
+        overCapUsage, 28_800L, overCapUsage, 28_800L, 28_800_000L, 28_800_000L));
+
+    // V1: hardened path preserves usage within cap and rejects usage over totalLimit.
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, highUsage, 28_800L, false);
+    AccountCapsule capV1 = account(THIRD);
+    processor.resetAccountUsage(capV1,
+        highUsage, 28_800L, highUsage, 28_800L, 28_800_000L, 28_800_000L);
+    assertEquals(highUsage, capV1.getEnergyUsage());
+    assertEquals(28_800L, capV1.getWindowSize(ENERGY));
+
+    setEnergyAccount(THIRD, 10_000L * TRX_PRECISION, overCapUsage, 28_800L, false);
+    AccountCapsule overCapV1 = account(THIRD);
+    assertThrows(ArithmeticException.class, () -> processor.resetAccountUsage(overCapV1,
+        overCapUsage, 28_800L, overCapUsage, 28_800L, 28_800_000L, 28_800_000L));
   }
 
   private void setEnergyAccount(byte[] address, long frozenEnergy, long usage, long windowSlots,

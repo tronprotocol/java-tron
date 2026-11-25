@@ -616,6 +616,7 @@ public class VMActuator implements Actuator2 {
                   VMConfig.disableJavaLangMath()), now, now));
       receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
       receipt.setCallerEnergyMergedWindowSize(account.getWindowSize(ENERGY));
+      receipt.setCallerEnergyMergedWindowSizeV2(account.getWindowSizeV2(ENERGY));
       rootRepository.updateAccount(account.createDbKey(), account);
     }
     return min(availableEnergy, energyFromFeeLimit, VMConfig.disableJavaLangMath());
@@ -791,6 +792,7 @@ public class VMActuator implements Actuator2 {
               creator.getEnergyUsage(), creatorEnergyLimit, now, now));
       receipt.setOriginEnergyMergedUsage(creator.getEnergyUsage());
       receipt.setOriginEnergyMergedWindowSize(creator.getWindowSize(ENERGY));
+      receipt.setOriginEnergyMergedWindowSizeV2(creator.getWindowSizeV2(ENERGY));
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return addExact(callerEnergyLimit, creatorEnergyLimit,
