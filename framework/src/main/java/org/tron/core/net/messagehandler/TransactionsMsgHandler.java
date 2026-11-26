@@ -150,6 +150,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private Set<Sha256Hash> check(PeerConnection peer, TransactionsMessage msg)
       throws P2pException {
     List<Transaction> list = msg.getTransactions().getTransactionsList();
+    if (list.isEmpty()) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "Transactions list is empty");
+    }
     Set<Sha256Hash> seen = new HashSet<>(list.size() * 2);
     for (Transaction trx : list) {
       Sha256Hash id = new TransactionCapsule(trx).getTransactionId();
