@@ -12,7 +12,6 @@ import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.service.statistics.MessageStatistics;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.protos.Protocol.ReasonCode;
 
 public class MessageTest {
 
@@ -32,18 +31,6 @@ public class MessageTest {
   public void testMessageStatistics() {
     MessageStatistics messageStatistics = new MessageStatistics();
     Message message1 = new Message(MessageTypes.P2P_HELLO.asByte(), null) {
-      @Override
-      public Class<?> getAnswerMessage() {
-        return null;
-      }
-    };
-    Message message2 = new Message(MessageTypes.P2P_PING.asByte(), null) {
-      @Override
-      public Class<?> getAnswerMessage() {
-        return null;
-      }
-    };
-    Message message3 = new Message(MessageTypes.P2P_PONG.asByte(), null) {
       @Override
       public Class<?> getAnswerMessage() {
         return null;
@@ -85,10 +72,6 @@ public class MessageTest {
 
     messageStatistics.addTcpInMessage(message1);
     messageStatistics.addTcpOutMessage(message1);
-    messageStatistics.addTcpInMessage(message2);
-    messageStatistics.addTcpOutMessage(message2);
-    messageStatistics.addTcpInMessage(message3);
-    messageStatistics.addTcpOutMessage(message3);
     messageStatistics.addTcpInMessage(message4);
     messageStatistics.addTcpOutMessage(message4);
     messageStatistics.addTcpInMessage(message5);
@@ -111,8 +94,8 @@ public class MessageTest {
     messageStatistics.addTcpInMessage(message11);
     messageStatistics.addTcpOutMessage(message11);
 
-    Assert.assertEquals(11, messageStatistics.tronInMessage.getTotalCount());
-    Assert.assertEquals(11, messageStatistics.tronOutMessage.getTotalCount());
+    Assert.assertEquals(9, messageStatistics.tronInMessage.getTotalCount());
+    Assert.assertEquals(9, messageStatistics.tronOutMessage.getTotalCount());
   }
 
 }

@@ -39,10 +39,6 @@ public enum MessageTypes {
 
   P2P_DISCONNECT(0x21),
 
-  P2P_PING(0x22),
-
-  P2P_PONG(0x23),
-
   DISCOVER_PING(0x30),
 
   DISCOVER_PONG(0x31),
@@ -73,24 +69,8 @@ public enum MessageTypes {
     return intToTypeMap.get((int) i);
   }
 
-  public static boolean inRange(byte code) {
-    return code < LAST.asByte();
-  }
-
-  public static boolean inP2pRange(byte code) {
-    return code <= P2P_PONG.asByte() && code >= P2P_HELLO.asByte();
-  }
-
-  public static boolean inTronRange(byte code) {
-    return code <= PBFT_COMMIT_MSG.asByte() && code >= FIRST.asByte();
-  }
-
   public byte asByte() {
     return (byte) (type);
-  }
-
-  public static boolean inPbftRange(byte code) {
-    return code == PBFT_MSG.asByte();
   }
 
   @Override

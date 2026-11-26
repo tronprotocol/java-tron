@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.ClassLevelAppContextFixture;
@@ -24,13 +25,15 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
+import org.tron.core.net.message.TronMessageFactory;
+import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol.ReasonCode;
 
 public class MessageHandlerTest {
 
@@ -99,15 +102,25 @@ public class MessageHandlerTest {
   }
 
   @Test
-  public void testPing() {
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-    Channel c1 = mock(Channel.class);
-    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
-    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
-    PeerManager.add(ctx, c1).setHelloMessageReceive(mock(HelloMessage.class));
+  public void testLegacyKeepAliveDisconnectsWithoutPong() throws Exception {
+    for (byte type : new byte[] {0x22, 0x23}) {
+      InetSocketAddress address = new InetSocketAddress("127.0.0.1", 10001 + type);
+      Channel channel = mock(Channel.class);
+      Mockito.when(channel.getInetSocketAddress()).thenReturn(address);
+      Mockito.when(channel.getInetAddress()).thenReturn(address.getAddress());
+      PeerConnection peer = PeerManager.add(ctx, channel);
+      peer.setHelloMessageReceive(mock(HelloMessage.class));
 
-    PingMessage pingMessage = new PingMessage();
-    p2pEventHandler.onMessage(c1, pingMessage.getSendBytes());
-    Assert.assertEquals(1, PeerManager.getPeers().size());
+      p2pEventHandler.onMessage(channel, new byte[] {type, (byte) 0xc0});
+
+      ArgumentCaptor<byte[]> response = ArgumentCaptor.forClass(byte[].class);
+      Mockito.verify(channel).send(response.capture());
+      DisconnectMessage disconnect = (DisconnectMessage) TronMessageFactory.create(
+          response.getValue());
+      Assert.assertEquals(ReasonCode.NO_SUCH_MESSAGE, disconnect.getReason());
+      Mockito.verify(channel).close();
+      Assert.assertEquals(0,
+          peer.getPeerStatistics().messageStatistics.tronInMessage.getTotalCount());
+    }
   }
 }

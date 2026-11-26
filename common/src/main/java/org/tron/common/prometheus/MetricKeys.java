@@ -72,7 +72,6 @@ public class MetricKeys {
     public static final String GRPC_SERVICE_LATENCY = "tron:grpc_service_latency_seconds";
     public static final String JSONRPC_SERVICE_LATENCY = "tron:jsonrpc_service_latency_seconds";
     public static final String MINER_LATENCY = "tron:miner_latency_seconds";
-    public static final String PING_PONG_LATENCY = "tron:ping_pong_latency_seconds";
     public static final String VERIFY_SIGN_LATENCY = "tron:verify_sign_latency_seconds";
     public static final String LOCK_ACQUIRE_LATENCY = "tron:lock_acquire_latency_seconds";
     public static final String BLOCK_PROCESS_LATENCY = "tron:block_process_latency_seconds";

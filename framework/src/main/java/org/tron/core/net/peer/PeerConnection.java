@@ -43,8 +43,6 @@ import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
-import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.statistics.NodeStatistics;
 import org.tron.core.net.service.statistics.PeerStatistics;
@@ -429,9 +427,7 @@ public class PeerConnection {
   }
 
   public static boolean needToLog(Message msg) {
-    if (msg instanceof PingMessage
-            || msg instanceof PongMessage
-            || msg instanceof TransactionsMessage
+    if (msg instanceof TransactionsMessage
             || msg instanceof PbftBaseMessage) {
       return false;
     }

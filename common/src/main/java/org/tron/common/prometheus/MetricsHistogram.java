@@ -21,7 +21,6 @@ public class MetricsHistogram {
         "method");
     init(MetricKeys.Histogram.MINER_LATENCY, "miner latency.",
         MetricLabels.Histogram.MINER);
-    init(MetricKeys.Histogram.PING_PONG_LATENCY, "node  ping pong  latency.");
     init(MetricKeys.Histogram.VERIFY_SIGN_LATENCY, "verify sign latency for trx , block.",
         "type");
     init(MetricKeys.Histogram.LOCK_ACQUIRE_LATENCY, "lock acquire latency.",

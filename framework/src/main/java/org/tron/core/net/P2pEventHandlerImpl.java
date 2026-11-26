@@ -35,7 +35,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.handshake.HandshakeService;
-import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.statistics.MessageStatistics;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
@@ -82,9 +81,6 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
 
   @Autowired
   private PbftMsgHandler pbftMsgHandler;
-
-  @Autowired
-  private KeepAliveService keepAliveService;
 
   @Autowired
   private EffectiveCheckService effectiveCheckService;
@@ -171,10 +167,6 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       }
 
       switch (type) {
-        case P2P_PING:
-        case P2P_PONG:
-          keepAliveService.processMessage(peer, msg);
-          break;
         case P2P_HELLO:
           handshakeService.processHelloMessage(peer, (HelloMessage) msg);
           break;

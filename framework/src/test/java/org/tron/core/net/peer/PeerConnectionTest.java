@@ -29,8 +29,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
-import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
@@ -427,16 +425,8 @@ public class PeerConnectionTest {
 
   @Test
   public void testNeedToLog() throws Exception {
-    Message msg = new PingMessage();
+    Message msg = new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
     boolean f = PeerConnection.needToLog(msg);
-    Assert.assertTrue(!f);
-
-    msg = new PongMessage();
-    f = PeerConnection.needToLog(msg);
-    Assert.assertTrue(!f);
-
-    msg = new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
-    f = PeerConnection.needToLog(msg);
     Assert.assertTrue(!f);
 
     msg = new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.BLOCK);
