@@ -10,8 +10,6 @@ import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
-import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.message.pbft.PbftCommitMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
@@ -51,10 +49,6 @@ public class TronMessageFactory {
         return new HelloMessage(packed);
       case P2P_DISCONNECT:
         return new DisconnectMessage(packed);
-      case P2P_PING:
-        return new PingMessage(packed);
-      case P2P_PONG:
-        return new PongMessage(packed);
       case BLOCK:
         return new BlockMessage(packed);
       case TRXS:

@@ -22,6 +22,7 @@ import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
+import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -31,6 +32,36 @@ import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
 public class TronMessageFactoryTest {
+
+  @Test
+  public void legacyKeepAliveIsRejectedRegardlessOfPayloadContents() {
+    byte[][] payloads = {new byte[0], {(byte) 0xc0}, {0x0a, 0x7f},
+        new byte[Parameter.MAX_MESSAGE_LENGTH - 2]};
+    for (byte type : new byte[] {0x22, 0x23}) {
+      for (byte[] payload : payloads) {
+        P2pException exception = assertThrows(P2pException.class,
+            () -> TronMessageFactory.create(withType(type, payload)));
+        assertEquals(TypeEnum.NO_SUCH_MESSAGE, exception.getType());
+      }
+    }
+  }
+
+  @Test
+  public void legacyKeepAliveIsRejectedAtP2pEntryWithoutReply() {
+    for (byte type : new byte[] {0x22, 0x23}) {
+      Channel channel = mock(Channel.class);
+      PeerConnection peer = mock(PeerConnection.class);
+      when(peer.getHelloMessageReceive()).thenReturn(mock(HelloMessage.class));
+      when(peer.getInetSocketAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 10001));
+      try (MockedStatic<PeerManager> peers = mockStatic(PeerManager.class)) {
+        peers.when(() -> PeerManager.getPeerConnection(channel)).thenReturn(peer);
+        new P2pEventHandlerImpl().onMessage(channel, withType(type, new byte[] {(byte) 0xc0}));
+        verify(peer).disconnect(ReasonCode.NO_SUCH_MESSAGE);
+        verify(peer, never()).getPeerStatistics();
+        verify(peer, never()).sendMessage(any());
+      }
+    }
+  }
 
   @Test
   public void trxIsRejectedBeforeParsingRegardlessOfPayloadContents() {
@@ -94,8 +125,9 @@ public class TronMessageFactoryTest {
       TransactionsMessage batch = (TransactionsMessage) TronMessageFactory.create(
           withType(MessageTypes.TRXS, new byte[0]));
       assertEquals(0, batch.getTransactions().getTransactionsCount());
-      assertEquals(MessageTypes.P2P_PING, TronMessageFactory.create(
-          withType(MessageTypes.P2P_PING, new byte[] {(byte) 0xc0})).getType());
+      DisconnectMessage disconnect = (DisconnectMessage) TronMessageFactory.create(
+          new DisconnectMessage(ReasonCode.REQUESTED).getSendBytes());
+      assertEquals(ReasonCode.REQUESTED, disconnect.getReason());
     }
   }
 
@@ -105,8 +137,12 @@ public class TronMessageFactoryTest {
   }
 
   private static byte[] withType(MessageTypes type, byte[] payload) {
+    return withType(type.asByte(), payload);
+  }
+
+  private static byte[] withType(byte type, byte[] payload) {
     byte[] data = new byte[payload.length + 1];
-    data[0] = type.asByte();
+    data[0] = type;
     System.arraycopy(payload, 0, data, 1, payload.length);
     return data;
   }

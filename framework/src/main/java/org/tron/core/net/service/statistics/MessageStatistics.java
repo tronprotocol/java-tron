@@ -10,10 +10,6 @@ public class MessageStatistics {
 
   public final MessageCount p2pInHello = new MessageCount();
   public final MessageCount p2pOutHello = new MessageCount();
-  public final MessageCount p2pInPing = new MessageCount();
-  public final MessageCount p2pOutPing = new MessageCount();
-  public final MessageCount p2pInPong = new MessageCount();
-  public final MessageCount p2pOutPong = new MessageCount();
   public final MessageCount p2pInDisconnect = new MessageCount();
   public final MessageCount p2pOutDisconnect = new MessageCount();
 
@@ -76,20 +72,6 @@ public class MessageStatistics {
           p2pInHello.add();
         } else {
           p2pOutHello.add();
-        }
-        break;
-      case P2P_PING:
-        if (flag) {
-          p2pInPing.add();
-        } else {
-          p2pOutPing.add();
-        }
-        break;
-      case P2P_PONG:
-        if (flag) {
-          p2pInPong.add();
-        } else {
-          p2pOutPong.add();
         }
         break;
       case P2P_DISCONNECT:

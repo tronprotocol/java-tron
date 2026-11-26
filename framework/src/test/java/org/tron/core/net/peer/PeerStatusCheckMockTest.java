@@ -39,15 +39,12 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
-import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.service.adv.AdvService;
-import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.statistics.MessageCount;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
@@ -139,23 +136,6 @@ public class PeerStatusCheckMockTest {
     check.statusCheck();
 
     Assert.assertSame(requested, peer.getSyncChainRequested());
-    verify(peer).disconnect(ReasonCode.TIME_OUT);
-  }
-
-  @Test
-  public void testPingAndPongDoNotExtendDeadline() {
-    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
-    P2pEventHandlerImpl events = new P2pEventHandlerImpl();
-    ReflectUtils.setFieldValue(events, "keepAliveService", new KeepAliveService());
-
-    dispatch(events, new PingMessage());
-    dispatch(events, new PongMessage());
-
-    verify(peer).sendMessage(any(PongMessage.class));
-    verify(peer, never()).disconnect(any());
-    Assert.assertSame(requested, peer.getSyncChainRequested());
-    Assert.assertEquals(1, peer.getLastInteractiveTime());
-    check.statusCheck();
     verify(peer).disconnect(ReasonCode.TIME_OUT);
   }
 
