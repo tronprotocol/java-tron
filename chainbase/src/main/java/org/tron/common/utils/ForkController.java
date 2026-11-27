@@ -27,6 +27,8 @@ public class ForkController {
 
   private static final byte VERSION_DOWNGRADE = (byte) 0;
   private static final byte VERSION_UPGRADE = (byte) 1;
+  private static final int MAX_KNOWN_VERSION = Arrays.stream(ForkBlockVersionEnum.values())
+      .mapToInt(ForkBlockVersionEnum::getValue).max().getAsInt();
   private static final byte[] check;
 
   static {
@@ -202,12 +204,14 @@ public class ForkController {
 
   public synchronized void reset() {
     int size = manager.getWitnessScheduleStore().getActiveWitnesses().size();
-    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
-      int versionValue = versionEnum.getValue();
-      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
-      if (Objects.nonNull(stats) && !pass(versionValue)) {
-        stats = new byte[size];
-        manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+    DynamicPropertiesStore store = manager.getDynamicPropertiesStore();
+    // Scanning stored stats includes future versions that are absent from the enum.
+    // Preserve records for historical gaps below the highest known version.
+    for (int version : store.getForkStatsVersions()) {
+      boolean futureVersion = version > MAX_KNOWN_VERSION;
+      if ((futureVersion || ForkBlockVersionEnum.getForkBlockVersionEnum(version) != null)
+          && !pass(version)) {
+        store.statsByVersion(version, new byte[size]);
       }
     }
   }

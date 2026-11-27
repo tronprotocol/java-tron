@@ -2,12 +2,15 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
@@ -127,6 +130,25 @@ public class ForkControllerTest extends BaseMethodTest {
     bytes = dynamicPropertiesStore
         .statsByVersion(Parameter.ForkBlockVersionEnum.VERSION_4_5.getValue());
     Assert.assertEquals(bytes.length, 6);
+  }
+
+  @Test
+  public void testResetClearsFutureStatsOnly() {
+    chainBaseManager.getWitnessScheduleStore()
+        .saveActiveWitnesses(Collections.singletonList(ByteString.copyFrom(getBytes(0))));
+    int futureVersion = Integer.MAX_VALUE;
+    int historicalVersion = 15;
+    byte[] stats = {1, 0};
+    byte[] invalidKey = ByteArray.fromString("FORK_VERSION_" + futureVersion + "0");
+    dynamicPropertiesStore.statsByVersion(futureVersion, stats);
+    dynamicPropertiesStore.statsByVersion(historicalVersion, stats);
+    dynamicPropertiesStore.put(invalidKey, new BytesCapsule(stats));
+
+    forkController.reset();
+
+    Assert.assertArrayEquals(new byte[1], dynamicPropertiesStore.statsByVersion(futureVersion));
+    Assert.assertArrayEquals(stats, dynamicPropertiesStore.statsByVersion(historicalVersion));
+    Assert.assertArrayEquals(stats, dynamicPropertiesStore.getUnchecked(invalidKey).getData());
   }
 
   @Test

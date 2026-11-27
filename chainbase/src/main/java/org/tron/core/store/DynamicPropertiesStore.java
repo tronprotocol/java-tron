@@ -6,8 +6,11 @@ import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
+import com.google.common.primitives.Ints;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import lombok.Getter;
@@ -22,6 +25,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -2360,6 +2364,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public byte[] statsByVersion(int version) {
     String statsKey = FORK_PREFIX + version;
     return revokingDB.getUnchecked(statsKey.getBytes());
+  }
+
+  public List<Integer> getForkStatsVersions() {
+    List<Integer> versions = new ArrayList<>();
+    for (WrappedByteArray key : revokingDB.prefixQuery(FORK_PREFIX.getBytes()).keySet()) {
+      String suffix = ByteArray.toStr(key.getBytes()).substring(FORK_PREFIX.length());
+      Integer version = Ints.tryParse(suffix);
+      if (version != null && Integer.toString(version).equals(suffix)) {
+        versions.add(version);
+      }
+    }
+    return versions;
   }
 
   public Boolean getForked(int version) {
