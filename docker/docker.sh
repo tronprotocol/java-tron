@@ -314,6 +314,7 @@ build() {
   local build_context="$SCRIPT_DIR"
   local temporary_context=""
   local build_status
+  local -a build_args=()
 
   if [[ $# -gt 1 ]]; then
     echo "build: expected at most one architecture argument" >&2
@@ -363,11 +364,17 @@ build() {
     fi
   fi
 
+  if [[ -n "${OPENJDK_VERSION:-}" ]]; then
+    build_args+=(--build-arg "OPENJDK_VERSION=$OPENJDK_VERSION")
+    printf 'build: overriding OPENJDK_VERSION=%q for %s\n' "$OPENJDK_VERSION" "$platform"
+  fi
+
   echo "docker build --platform $platform --file $dockerfile_path"
   docker build \
     --platform "$platform" \
     --file "$dockerfile_path" \
     --tag "$IMAGE_REFERENCE" \
+    "${build_args[@]}" \
     "$build_context"
   build_status=$?
 

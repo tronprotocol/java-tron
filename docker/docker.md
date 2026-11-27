@@ -159,6 +159,14 @@ $ bash docker.sh --build amd64
 $ bash docker.sh --build arm64
 ```
 
+To override the pin for one build, set `OPENJDK_VERSION` to the full Ubuntu package version for the target architecture.
+
+```shell
+OPENJDK_VERSION='<full Java 17 package version>' bash docker.sh --build arm64
+```
+
+A successful build updates the local `tronprotocol/java-tron:latest` tag used by `--run`. To test a candidate version under a separate tag, follow [Update a pinned OpenJDK package](#update-a-pinned-openjdk-package).
+
 Building for an architecture different from the Docker daemon requires a builder with the corresponding emulation support. Docker Desktop provides this by default; standalone Docker Engine installations may require QEMU/binfmt configuration.
 
 Docker may reuse cached layers, so rebuilding does not necessarily fetch the latest remote `master`. To fetch the source again, run one of the following commands from the java-tron repository root. The helper does not accept `--no-cache`; use Docker directly:
@@ -179,11 +187,41 @@ When the script is used from a java-tron checkout, only the Dockerfile and build
 
 Standalone `--build` using only a downloaded `docker.sh` is currently unavailable. The helper downloads only the architecture-specific Dockerfile from `develop`, but the current `develop` Dockerfiles also require `docker-entrypoint.sh`, which is missing from the temporary build context. Use a complete checkout containing the matching Dockerfiles until those files are synchronized to `develop` and standalone builds are verified for both architectures.
 
+### Update a pinned OpenJDK package
+
+Each Dockerfile pins an exact OpenJDK package version from the Ubuntu 24.04 repositories. When Ubuntu replaces that version in the package index, a fresh build for the affected architecture can fail with `Version ... was not found`. Check the versions available for that architecture.
+
+```shell
+# amd64 requires the same version of both Java 8 packages
+docker run --rm --platform linux/amd64 ubuntu:24.04 sh -ec \
+  'apt-get --error-on=any update -qq && apt-cache madison openjdk-8-jdk-headless openjdk-8-jre-headless'
+
+# arm64 uses the Java 17 runtime
+docker run --rm --platform linux/arm64 ubuntu:24.04 sh -ec \
+  'apt-get --error-on=any update -qq && apt-cache madison openjdk-17-jre-headless'
+```
+
+Choose the full version from the second column, including the Ubuntu revision. For a security update, check the fixed version for Ubuntu 24.04 in the relevant [Ubuntu Security Notice](https://ubuntu.com/security/notices). From the repository root, substitute the chosen version in the build command for the affected architecture.
+
+```shell
+# amd64
+docker build --no-cache --platform linux/amd64 \
+  --build-arg OPENJDK_VERSION='<full Java 8 package version>' \
+  -f docker/Dockerfile -t java-tron:check-amd64 docker
+
+# arm64
+docker build --no-cache --platform linux/arm64 \
+  --build-arg OPENJDK_VERSION='<full Java 17 package version>' \
+  -f docker/arm64/Dockerfile -t java-tron:check-arm64 docker
+```
+
+Verify the runtime with `docker run --rm --platform <platform> --entrypoint java <image> -version` and confirm FullNode starts with your usual configuration. Then update the `ARG OPENJDK_VERSION` default in the corresponding Dockerfile so subsequent builds use the verified version.
+
 ## Options
 
 ### Commands
 
-- **`--build [amd64|arm64]`**: build `tronprotocol/java-tron:latest` from the remote `master` branch, optionally for the specified architecture
+- **`--build [amd64|arm64]`**: build `tronprotocol/java-tron:latest` from the remote `master` branch, optionally for the specified architecture. Set `OPENJDK_VERSION` to override the pinned Ubuntu OpenJDK package version for that build.
 - **`--pull`**: download `tronprotocol/java-tron:latest` from Docker Hub
 - **`--run`**: run `tronprotocol/java-tron:latest`
 - **`--start`**: start the existing java-tron container
