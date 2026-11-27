@@ -7,6 +7,7 @@ import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -16,6 +17,7 @@ import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -23,6 +25,9 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
+import org.tron.core.net.messagehandler.InventoryMsgHandler;
+import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.statistics.PeerStatistics;
@@ -273,6 +278,57 @@ public class P2pEventHandlerImplTest extends BaseTest {
 
     // checkInvRateLimit throws BAD_MESSAGE -> processException -> disconnect(BAD_PROTOCOL)
     verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+  }
+
+  @Test
+  public void testEmptyInventoryDisconnects() throws Exception {
+    InventoryMsgHandler inventoryHandler = new InventoryMsgHandler();
+    ReflectUtils.setFieldValue(inventoryHandler, "tronNetDelegate", mock(TronNetDelegate.class));
+    ReflectUtils.setFieldValue(inventoryHandler, "transactionsMsgHandler",
+        mock(TransactionsMsgHandler.class));
+    for (InventoryType type : new InventoryType[] {InventoryType.TRX, InventoryType.BLOCK}) {
+      PeerConnection peer = mock(PeerConnection.class);
+      PeerStatistics stats = new PeerStatistics();
+      Mockito.when(peer.getPeerStatistics()).thenReturn(stats);
+      P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+      ReflectUtils.setFieldValue(handler, "inventoryMsgHandler", inventoryHandler);
+      Method method = P2pEventHandlerImpl.class
+          .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
+      method.setAccessible(true);
+
+      InventoryMessage msg = new InventoryMessage(Collections.emptyList(), type);
+      method.invoke(handler, peer, msg.getSendBytes());
+
+      verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      Mockito.verify(peer, Mockito.never()).sendMessage(Mockito.any());
+      Mockito.verify(peer, Mockito.never()).setLastInteractiveTime(Mockito.anyLong());
+      Assert.assertEquals(0, stats.messageStatistics.tronInTrxInventoryElement.getTotalCount());
+      Assert.assertEquals(0, stats.messageStatistics.tronInBlockInventoryElement.getTotalCount());
+    }
+  }
+
+  @Test
+  public void testEmptyTransactionsDisconnects() throws Exception {
+    TransactionsMsgHandler transactionsHandler = new TransactionsMsgHandler();
+    try {
+      PeerConnection peer = mock(PeerConnection.class);
+      Mockito.when(peer.getPeerStatistics()).thenReturn(new PeerStatistics());
+      P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+      ReflectUtils.setFieldValue(handler, "transactionsMsgHandler", transactionsHandler);
+      Method method = P2pEventHandlerImpl.class
+          .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
+      method.setAccessible(true);
+
+      TransactionsMessage msg = new TransactionsMessage(Collections.emptyList());
+      method.invoke(handler, peer, msg.getSendBytes());
+
+      verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      Mockito.verify(peer, Mockito.never()).sendMessage(Mockito.any());
+      Mockito.verify(peer, Mockito.never()).setLastInteractiveTime(Mockito.anyLong());
+      Mockito.verify(peer, Mockito.never()).getAdvInvRequest();
+    } finally {
+      transactionsHandler.close();
+    }
   }
 
   @Test

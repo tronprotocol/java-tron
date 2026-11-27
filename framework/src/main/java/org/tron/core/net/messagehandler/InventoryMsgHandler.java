@@ -57,6 +57,9 @@ public class InventoryMsgHandler implements TronMsgHandler {
       throws P2pException {
 
     List<Sha256Hash> hashList = inventoryMessage.getHashList();
+    if (hashList.isEmpty()) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "Inventory ids is empty");
+    }
     if (hashList.size() != new HashSet<>(hashList).size()) {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
           "Inventory contains duplicate hashes, size: " + hashList.size());

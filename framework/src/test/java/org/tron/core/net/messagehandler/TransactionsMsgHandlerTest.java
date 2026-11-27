@@ -125,6 +125,21 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testEmptyTransactionsRejected() {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    try {
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      TransactionsMessage msg = new TransactionsMessage(Collections.emptyList());
+      P2pException exception = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, msg));
+      Assert.assertEquals(TypeEnum.BAD_MESSAGE, exception.getType());
+      Mockito.verifyNoInteractions(peer);
+    } finally {
+      handler.close();
+    }
+  }
+
+  @Test
   public void testProcessMessage() {
     TransactionsMsgHandler transactionsMsgHandler = new TransactionsMsgHandler();
     ExecutorService originalPool = null;

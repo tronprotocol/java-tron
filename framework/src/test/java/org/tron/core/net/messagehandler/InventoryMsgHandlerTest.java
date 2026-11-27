@@ -6,12 +6,13 @@ import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.TestConstants;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -30,7 +31,8 @@ public class InventoryMsgHandlerTest {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     Args.logConfig();
 
-    InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);
+    InventoryMessage msg = new InventoryMessage(
+        Collections.singletonList(Sha256Hash.ZERO_HASH), InventoryType.TRX);
     PeerConnection peer = new PeerConnection();
     peer.setChannel(getChannel("1.0.0.3", 1000));
     peer.setNeedSyncFromPeer(true);
@@ -56,6 +58,22 @@ public class InventoryMsgHandlerTest {
 
     handler.processMessage(peer, msg);
     Mockito.verify(tronNetDelegate, Mockito.atLeastOnce()).isBlockUnsolidified();
+  }
+
+  @Test
+  public void testEmptyHashesRejected() {
+    InventoryMsgHandler handler = new InventoryMsgHandler();
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", mock(TronNetDelegate.class));
+    ReflectUtils.setFieldValue(handler, "transactionsMsgHandler",
+        mock(TransactionsMsgHandler.class));
+    PeerConnection peer = mock(PeerConnection.class);
+    for (InventoryType type : new InventoryType[] {InventoryType.TRX, InventoryType.BLOCK}) {
+      InventoryMessage msg = new InventoryMessage(Collections.emptyList(), type);
+      P2pException exception = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, msg));
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, exception.getType());
+    }
+    Mockito.verifyNoInteractions(peer);
   }
 
   @Test
