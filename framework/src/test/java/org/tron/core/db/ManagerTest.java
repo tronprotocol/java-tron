@@ -79,12 +79,14 @@ import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.WitnessCreateActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
@@ -135,6 +137,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ShieldContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 
 @Slf4j
@@ -980,6 +983,119 @@ public class ManagerTest extends BaseMethodTest {
     Set<String> ownerAddressSet =
         (Set<String>) ReflectUtils.getFieldObject(manager, "ownerAddressSet");
     Assert.assertTrue(ownerAddressSet.contains(ByteArray.toHexString(owner)));
+  }
+
+  @Test
+  public void getVerifyTxsIncludesTxFromWitnessCreateOwner() throws Exception {
+    byte[] owner = "f1".getBytes();
+    TransactionCapsule witnessCreateTx = new TransactionCapsule(
+        WitnessCreateContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .setUrl(ByteString.copyFromUtf8("http://tron.test")).build(),
+        ContractType.WitnessCreateContract);
+    TransactionCapsule transferTx = new TransactionCapsule(
+        TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .setAmount(7).build(),
+        ContractType.TransferContract);
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getPendingTransactions().add(witnessCreateTx);
+    dbManager.getPendingTransactions().add(transferTx);
+
+    Field field = Manager.class.getDeclaredField("ownerAddressSet");
+    field.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Set<String> ownerAddressSet = (Set<String>) field.get(dbManager);
+    Set<String> backup = new HashSet<>(ownerAddressSet);
+    ownerAddressSet.clear();
+
+    try {
+      List<Transaction> blockTxs = new ArrayList<>();
+      blockTxs.add(witnessCreateTx.getInstance());
+      blockTxs.add(transferTx.getInstance());
+      BlockCapsule block = new BlockCapsule(0, ByteString.EMPTY, 0, blockTxs);
+
+      List<TransactionCapsule> txs = dbManager.getVerifyTxs(block);
+
+      boolean included = txs.stream()
+          .anyMatch(tx -> tx.getTransactionId().equals(transferTx.getTransactionId()));
+      Assert.assertTrue("transaction from the WitnessCreate owner should be verified", included);
+    } finally {
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(backup);
+      dbManager.getPendingTransactions().clear();
+    }
+  }
+
+  @Test
+  public void isMultiSignTransactionRecognizesWitnessCreate() throws Exception {
+    Method method = Manager.class.getDeclaredMethod("isMultiSignTransaction", Transaction.class);
+    method.setAccessible(true);
+    ByteString owner = ByteString.copyFrom("f1".getBytes());
+
+    Transaction witnessCreate = new TransactionCapsule(
+        WitnessCreateContract.newBuilder()
+            .setOwnerAddress(owner)
+            .setUrl(ByteString.copyFromUtf8("http://tron.test")).build(),
+        ContractType.WitnessCreateContract).getInstance();
+    Transaction permissionUpdate = new TransactionCapsule(
+        AccountContract.AccountPermissionUpdateContract.newBuilder()
+            .setOwnerAddress(owner).build(),
+        ContractType.AccountPermissionUpdateContract).getInstance();
+
+    Assert.assertTrue((boolean) method.invoke(dbManager, permissionUpdate));
+    Assert.assertTrue((boolean) method.invoke(dbManager, witnessCreate));
+  }
+
+  @Test
+  public void witnessCreateAddsDefaultActivePermission() throws Exception {
+    ECKey key = new ECKey(Utils.getRandom());
+    byte[] addr = key.getAddress();
+    ByteString addrBs = ByteString.copyFrom(addr);
+    byte[] to = new ECKey(Utils.getRandom()).getAddress();
+
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("account"), addrBs, AccountType.Normal, 200_000_000_000L);
+    Assert.assertEquals(0, account.getInstance().getActivePermissionCount());
+    chainManager.getAccountStore().put(addr, account);
+    chainManager.getWitnessStore().delete(addr);
+    chainManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+
+    TransferContract transfer = TransferContract.newBuilder()
+        .setOwnerAddress(addrBs)
+        .setToAddress(ByteString.copyFrom(to))
+        .setAmount(1).build();
+    Transaction raw = Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder()
+                .setType(ContractType.TransferContract)
+                .setParameter(Any.pack(transfer))
+                .setPermissionId(2))).build();
+    TransactionCapsule beforeTx = new TransactionCapsule(raw);
+    beforeTx.sign(key.getPrivKeyBytes());
+
+    ValidateSignatureException ex = assertThrows(ValidateSignatureException.class,
+        () -> beforeTx.validateSignature(
+            chainManager.getAccountStore(), chainManager.getDynamicPropertiesStore()));
+    Assert.assertTrue("expected permission-missing rejection, got: " + ex.getMessage(),
+        ex.getMessage().contains("permission isn't exit"));
+
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(Any.pack(
+        WitnessCreateContract.newBuilder()
+            .setOwnerAddress(addrBs)
+            .setUrl(ByteString.copyFromUtf8("https://tron.network")).build()));
+    actuator.validate();
+    actuator.execute(new TransactionResultCapsule());
+
+    AccountCapsule after = chainManager.getAccountStore().get(addr);
+    Assert.assertNotNull("WitnessCreate should add the default active permission",
+        after.getPermissionById(2));
+
+    TransactionCapsule afterTx = new TransactionCapsule(beforeTx.getInstance());
+    Assert.assertTrue(afterTx.validateSignature(
+        chainManager.getAccountStore(), chainManager.getDynamicPropertiesStore()));
   }
 
   @Test
